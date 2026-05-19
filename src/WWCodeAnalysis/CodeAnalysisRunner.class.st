@@ -91,6 +91,7 @@ CodeAnalysisRunner class >> latexTableForAllClassesPerPackage [
 		stream nextPutAll: (self latexRowFor: 'Non-test packages' counts: (self classCountsFor: nonTestPackages)); cr.
 		stream nextPutAll: '\hline'; cr.
 		stream nextPutAll: '\end{tabular}'
+	]
 ]
 
 { #category : 'accessing' }
