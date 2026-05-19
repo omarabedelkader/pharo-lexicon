@@ -34,6 +34,7 @@ CodeAnalysisRunnerTest >> testStatisticsForCounts [
 
 { #category : 'tests' }
 CodeAnalysisRunnerTest >> testTexFileName [
+	self assert: CodeAnalysisRunner countsTexFileName equals: 'counts.tex'.
 	self assert: CodeAnalysisRunner classesPerPackageTexFileName equals: 'all_classes_per_package.tex'.
 	self assert: CodeAnalysisRunner locPerMethodTexFileName equals: 'all_loc_per_method.tex'.
 	self assert: CodeAnalysisRunner locPerNonDataMethodTexFileName equals: 'all_loc_per_non_data_method.tex'.
@@ -51,5 +52,21 @@ CodeAnalysisRunnerTest >> testLatexRowForAllMethodsFormatsExpectedCells [
 	self assert: (row includesSubstring: '\bfseries All methods').
 	self assert: (row includesSubstring: '4 & 1').
 	self assert: (row includesSubstring: ' & 2.5 & ').
+	self assert: (row endsWith: ' \\')
+]
+
+{ #category : 'tests' }
+CodeAnalysisRunnerTest >> testLatexRowForCountsFormatsExpectedCells [
+	| row |
+	row := CodeAnalysisRunner
+		latexRowForCountsLabel: 'Default packages'
+		values: (Dictionary newFrom: {
+			#packages -> 12.
+			#classes -> 1234.
+			#methods -> 56789.
+			#linesOfCode -> 101112.
+			#tokens -> 131415 }).
+
+	self assert: (row includesSubstring: 'Default packages & 12 & 1,234 & 56,789 & 101,112 & 131,415').
 	self assert: (row endsWith: ' \\')
 ]

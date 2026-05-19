@@ -81,6 +81,14 @@ CodeAnalysisRunner class >> allClassesPerPackageForPackagesNamed: aCollection [
 	^ self allClassesPerPackage
 ]
 
+{ #category : 'running' }
+CodeAnalysisRunner class >> counts [
+	| table |
+	table := self latexTableForCounts.
+	self write: table to: self countsTexFileName.
+	^ table
+]
+
 { #category : 'private' }
 CodeAnalysisRunner class >> classCountsFor: aCollectionOfPackages [
 	^ aCollectionOfPackages collect: [ :each | self classCountOf: each ]
@@ -108,6 +116,26 @@ CodeAnalysisRunner class >> classesOfPackage: aPackage [
 { #category : 'accessing' }
 CodeAnalysisRunner class >> classesPerPackageTexFileName [
 	^ 'all_classes_per_package.tex'
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> countsForSelectedPackages [
+	| packages classes methods |
+	packages := self selectedPackages.
+	classes := self classesInSelectedPackages.
+	methods := self methodsInSelectedPackages.
+
+	^ Dictionary newFrom: {
+		#packages -> packages size.
+		#classes -> classes size.
+		#methods -> methods size.
+		#linesOfCode -> (self sum: (self linesOfCodeForMethods: methods)).
+		#tokens -> (self sum: (self tokenCountsForMethods: methods)) }
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> countsTexFileName [
+	^ 'counts.tex'
 ]
 
 { #category : 'accessing' }
@@ -143,6 +171,19 @@ CodeAnalysisRunner class >> formatMean: aNumber [
 CodeAnalysisRunner class >> formatStatistic: aKey value: aValue [
 	aKey = #mean ifTrue: [ ^ self formatMean: aValue ].
 	^ aValue asInteger printString
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> formatTableCount: anInteger [
+	| digits |
+	digits := anInteger asInteger printString.
+	digits size <= 3 ifTrue: [ ^ digits ].
+
+	^ String streamContents: [ :stream |
+		digits withIndexDo: [ :character :index |
+			stream nextPut: character.
+			(((digits size - index) \\ 3) = 0 and: [ index < digits size ])
+				ifTrue: [ stream nextPutAll: ',' ] ] ]
 ]
 
 { #category : 'private' }
@@ -197,6 +238,24 @@ CodeAnalysisRunner class >> latexTableForAllClassesPerPackage [
 		stream nextPutAll: (self latexRowFor: 'All packages' counts: (self classCountsFor: packages)); cr.
 		stream nextPutAll: (self latexRowFor: 'Test packages' counts: (self classCountsFor: testPackages)); cr.
 		stream nextPutAll: (self latexRowFor: 'Non-test packages' counts: (self classCountsFor: nonTestPackages)); cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\end{tabular}'
+	]
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> latexTableForCounts [
+	| counts |
+	counts := self countsForSelectedPackages.
+
+	^ String streamContents: [ :stream |
+		stream nextPutAll: '\begin{tabular}{lrrrrr}'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\bfseries Project & \bfseries Packages & \bfseries Classes & \bfseries Methods & \bfseries Lines of Code & \bfseries Tokens \\' ; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: (self latexRowForCountsLabel: 'Default packages' values: counts); cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: (self latexRowForCountsLabel: 'Total' values: counts); cr.
 		stream nextPutAll: '\hline'; cr.
 		stream nextPutAll: '\end{tabular}'
 	]
@@ -260,6 +319,24 @@ CodeAnalysisRunner class >> latexTableForAllTokensPerMethod [
 		stream nextPutAll: '\hline'; cr.
 		stream nextPutAll: '\end{tabular}'
 	]
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> latexRowForCountsLabel: aLabel values: aDictionary [
+	^ String streamContents: [ :stream |
+		stream
+			nextPutAll: aLabel;
+			nextPutAll: ' & ';
+			nextPutAll: (self formatTableCount: (aDictionary at: #packages));
+			nextPutAll: ' & ';
+			nextPutAll: (self formatTableCount: (aDictionary at: #classes));
+			nextPutAll: ' & ';
+			nextPutAll: (self formatTableCount: (aDictionary at: #methods));
+			nextPutAll: ' & ';
+			nextPutAll: (self formatTableCount: (aDictionary at: #linesOfCode));
+			nextPutAll: ' & ';
+			nextPutAll: (self formatTableCount: (aDictionary at: #tokens));
+			nextPutAll: ' \\' ]
 ]
 
 { #category : 'running' }
@@ -335,6 +412,13 @@ CodeAnalysisRunner class >> tokenCountOfMethod: aCompiledMethod [
 { #category : 'private' }
 CodeAnalysisRunner class >> tokenCountsForMethods: aCollectionOfMethods [
 	^ aCollectionOfMethods collect: [ :each | self tokenCountOfMethod: each ]
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> sum: aCollectionOfNumbers [
+	^ aCollectionOfNumbers
+		inject: 0
+		into: [ :total :each | total + each ]
 ]
 
 { #category : 'accessing' }
