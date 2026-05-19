@@ -36,9 +36,12 @@ CodeAnalysisRunnerTest >> testStatisticsForCounts [
 CodeAnalysisRunnerTest >> testTexFileName [
 	self assert: CodeAnalysisRunner countsTexFileName equals: 'counts.tex'.
 	self assert: CodeAnalysisRunner classesPerPackageTexFileName equals: 'all_classes_per_package.tex'.
-	self assert: CodeAnalysisRunner locPerMethodTexFileName equals: 'all_loc_per_method.tex'.
 	self assert: CodeAnalysisRunner locPerNonDataMethodTexFileName equals: 'all_loc_per_non_data_method.tex'.
 	self assert: CodeAnalysisRunner methodsPerClassTexFileName equals: 'all_methods_per_class.tex'.
+	self assert: CodeAnalysisRunner pharoIdentifierNamesDistributionTexFileName equals: 'pharo_identifier_names_distribution.tex'.
+	self assert: CodeAnalysisRunner pharoLiteralDistributionTexFileName equals: 'pharo_literal_distribution.tex'.
+	self assert: CodeAnalysisRunner pharoTokenTypeDistributionTexFileName equals: 'pharo_token_type_distribution.tex'.
+	self assert: CodeAnalysisRunner wordCountsTexFileName equals: 'word_counts.tex'.
 	self assert: CodeAnalysisRunner tokensPerMethodTexFileName equals: 'all_tokens_per_method.tex'
 ]
 
@@ -68,5 +71,68 @@ CodeAnalysisRunnerTest >> testLatexRowForCountsFormatsExpectedCells [
 			#tokens -> 131415 }).
 
 	self assert: (row includesSubstring: 'Default packages & 12 & 1,234 & 56,789 & 101,112 & 131,415').
+	self assert: (row endsWith: ' \\')
+]
+
+{ #category : 'tests' }
+CodeAnalysisRunnerTest >> testLatexRowForIdentifierTypeFormatsExpectedCells [
+	| row |
+	row := CodeAnalysisRunner
+		latexRowForIdentifierType: 'Method names'
+		words: #('alpha' 'beta' 'gamma')
+		totalWords: 10
+		totalCharacters: 20.
+
+	self assert: (row includesSubstring: 'Method names & 3 & 30.0 & 14 & 70.0').
+	self assert: (row endsWith: ' \\')
+]
+
+{ #category : 'tests' }
+CodeAnalysisRunnerTest >> testLatexRowForLiteralTypeFormatsExpectedCells [
+	| row |
+	row := CodeAnalysisRunner
+		latexRowForLiteralType: 'Numbers'
+		literals: { 'Numbers' -> 123. 'Numbers' -> 4567 }
+		totalLiterals: 10
+		totalCharacters: 20.
+
+	self assert: (row includesSubstring: 'Numbers & 2 & 20.0 & 7 & 35.0').
+	self assert: (row endsWith: ' \\')
+]
+
+{ #category : 'tests' }
+CodeAnalysisRunnerTest >> testLatexRowForTypeTotalsFormatsExpectedCells [
+	| row |
+	row := CodeAnalysisRunner
+		latexRowForTypeTotalsLabel: 'Keywords'
+		values: (Dictionary newFrom: {
+			#count -> 25.
+			#characters -> 40 })
+		totalCount: 100
+		totalCharacters: 80.
+
+	self assert: (row includesSubstring: 'Keywords & 25 & 25.0 & 40 & 50.0').
+	self assert: (row endsWith: ' \\')
+]
+
+{ #category : 'tests' }
+CodeAnalysisRunnerTest >> testLatexRowForWordCountFormatsExpectedCells [
+	| counts row |
+	counts := Dictionary newFrom: {
+		#words -> 10.
+		#uniqueWords -> 7.
+		#uniqueStems -> 5.
+		#englishWords -> 8.
+		#uniqueEnglishWords -> 6.
+		#uniqueEnglishStems -> 4 }.
+	row := CodeAnalysisRunner
+		latexRowForWordCountLabel: 'Words'
+		pharo: counts
+		pharoStar: counts
+		brown: counts
+		gutenberg: counts
+		selector: #words.
+
+	self assert: (row includesSubstring: '\bfseries Words & 10 & 10 & 10 & 10').
 	self assert: (row endsWith: ' \\')
 ]
