@@ -14,7 +14,7 @@ Class {
 CodeAnalysisRunner class >> allClassesPerPackage [
 	| table |
 	table := self latexTableForAllClassesPerPackage.
-	self write: table to: 'all_classes_per_package.tex'.
+	self write: table to: self texFileName.
 	^ table
 ]
 
@@ -116,6 +116,11 @@ CodeAnalysisRunner class >> latexTableForAllClassesPerPackage [
 	]
 ]
 
+{ #category : 'running' }
+CodeAnalysisRunner class >> saveDefaultPackagesAnalysisToTex [
+	^ self allClassesPerPackage
+]
+
 { #category : 'accessing' }
 CodeAnalysisRunner class >> outputDirectory [
 	^ outputDirectory ifNil: [ FileSystem disk workingDirectory ]
@@ -201,6 +206,11 @@ CodeAnalysisRunner class >> statisticsForCounts: counts [
 		#mean -> (sum / counts size asFloat).
 		#q75 -> (self percentile: 0.75 ofSorted: sorted).
 		#max -> sorted last }
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> texFileName [
+	^ 'defaultpackages-analysis.tex'
 ]
 
 { #category : 'saving' }

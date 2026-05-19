@@ -31,3 +31,8 @@ CodeAnalysisRunnerTest >> testStatisticsForCounts [
 	self assert: (stats at: #q75) equals: 3.25.
 	self assert: (stats at: #max) equals: 4
 ]
+
+{ #category : 'tests' }
+CodeAnalysisRunnerTest >> testTexFileName [
+	self assert: CodeAnalysisRunner texFileName equals: 'defaultpackages-analysis.tex'
+]
