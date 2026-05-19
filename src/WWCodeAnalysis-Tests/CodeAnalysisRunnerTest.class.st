@@ -34,5 +34,19 @@ CodeAnalysisRunnerTest >> testStatisticsForCounts [
 
 { #category : 'tests' }
 CodeAnalysisRunnerTest >> testTexFileName [
-	self assert: CodeAnalysisRunner texFileName equals: 'defaultpackages-analysis.tex'
+	self assert: CodeAnalysisRunner classesPerPackageTexFileName equals: 'all_classes_per_package.tex'.
+	self assert: CodeAnalysisRunner locPerMethodTexFileName equals: 'all_loc_per_method.tex'
+]
+
+{ #category : 'tests' }
+CodeAnalysisRunnerTest >> testLatexRowForAllMethodsFormatsExpectedCells [
+	| row |
+	row := CodeAnalysisRunner
+		latexRowFor: 'All methods'
+		counts: #(1 2 3 4).
+
+	self assert: (row includesSubstring: '\bfseries All methods').
+	self assert: (row includesSubstring: '4 & 1').
+	self assert: (row includesSubstring: ' & 2.5 & ').
+	self assert: (row endsWith: ' \\')
 ]

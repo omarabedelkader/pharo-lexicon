@@ -14,13 +14,26 @@ Class {
 CodeAnalysisRunner class >> allClassesPerPackage [
 	| table |
 	table := self latexTableForAllClassesPerPackage.
-	self write: table to: self texFileName.
+	self write: table to: self classesPerPackageTexFileName.
 	^ table
 ]
 
 { #category : 'running' }
 CodeAnalysisRunner class >> allclassesperpackage [
 	^ self allClassesPerPackage
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> allLocPerMethod [
+	| table |
+	table := self latexTableForAllLocPerMethod.
+	self write: table to: self locPerMethodTexFileName.
+	^ table
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> alllocpermethod [
+	^ self allLocPerMethod
 ]
 
 { #category : 'running' }
@@ -39,6 +52,11 @@ CodeAnalysisRunner class >> classCountOf: aPackage [
 	(aPackage respondsTo: #definedClasses) ifTrue: [ ^ aPackage definedClasses size ].
 	(aPackage respondsTo: #classes) ifTrue: [ ^ aPackage classes size ].
 	self error: 'Unsupported package object: ', aPackage class name
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> classesPerPackageTexFileName [
+	^ 'all_classes_per_package.tex'
 ]
 
 { #category : 'accessing' }
@@ -82,6 +100,11 @@ CodeAnalysisRunner class >> isTestPackage: aPackage [
 ]
 
 { #category : 'private' }
+CodeAnalysisRunner class >> isTestMethod: aCompiledMethod [
+	^ aCompiledMethod methodClass isTestCase
+]
+
+{ #category : 'private' }
 CodeAnalysisRunner class >> latexRowFor: aLabel counts: counts [
 	| summary |
 	summary := self statisticsForCounts: counts.
@@ -117,8 +140,43 @@ CodeAnalysisRunner class >> latexTableForAllClassesPerPackage [
 ]
 
 { #category : 'running' }
+CodeAnalysisRunner class >> latexTableForAllLocPerMethod [
+	| methods testMethods nonTestMethods |
+	methods := self methodsInSelectedPackages.
+	testMethods := methods select: [ :each | self isTestMethod: each ].
+	nonTestMethods := methods reject: [ :each | self isTestMethod: each ].
+
+	^ String streamContents: [ :stream |
+		stream nextPutAll: '\begin{tabular}{rr|rrrrrr}'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '& \bfseries count & \bfseries min & \bfseries 25\% & \bfseries median & \bfseries mean & \bfseries 75\% & \bfseries max \\' ; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: (self latexRowFor: 'All methods' counts: (self linesOfCodeForMethods: methods)); cr.
+		stream nextPutAll: (self latexRowFor: 'Test methods' counts: (self linesOfCodeForMethods: testMethods)); cr.
+		stream nextPutAll: (self latexRowFor: 'Non-test methods' counts: (self linesOfCodeForMethods: nonTestMethods)); cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\end{tabular}'
+	]
+]
+
+{ #category : 'running' }
 CodeAnalysisRunner class >> saveDefaultPackagesAnalysisToTex [
 	^ self allClassesPerPackage
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> linesOfCodeForMethods: aCollectionOfMethods [
+	^ aCollectionOfMethods collect: [ :each | each linesOfCode ]
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> locPerMethodTexFileName [
+	^ 'all_loc_per_method.tex'
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> methodsInSelectedPackages [
+	^ self selectedPackages flatCollect: [ :each | each methods ]
 ]
 
 { #category : 'accessing' }
@@ -206,11 +264,6 @@ CodeAnalysisRunner class >> statisticsForCounts: counts [
 		#mean -> (sum / counts size asFloat).
 		#q75 -> (self percentile: 0.75 ofSorted: sorted).
 		#max -> sorted last }
-]
-
-{ #category : 'accessing' }
-CodeAnalysisRunner class >> texFileName [
-	^ 'defaultpackages-analysis.tex'
 ]
 
 { #category : 'saving' }
