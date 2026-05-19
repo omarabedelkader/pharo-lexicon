@@ -63,6 +63,19 @@ CodeAnalysisRunner class >> allmethodsperclass [
 ]
 
 { #category : 'running' }
+CodeAnalysisRunner class >> allTokensPerMethod [
+	| table |
+	table := self latexTableForAllTokensPerMethod.
+	self write: table to: self tokensPerMethodTexFileName.
+	^ table
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> alltokenspermethod [
+	^ self allTokensPerMethod
+]
+
+{ #category : 'running' }
 CodeAnalysisRunner class >> allClassesPerPackageForPackagesNamed: aCollection [
 	self defaultPackages: aCollection.
 	^ self allClassesPerPackage
@@ -230,6 +243,26 @@ CodeAnalysisRunner class >> latexTableForAllMethodsPerClass [
 ]
 
 { #category : 'running' }
+CodeAnalysisRunner class >> latexTableForAllTokensPerMethod [
+	| methods testMethods nonTestMethods |
+	methods := self methodsInSelectedPackages.
+	testMethods := methods select: [ :each | self isTestMethod: each ].
+	nonTestMethods := methods reject: [ :each | self isTestMethod: each ].
+
+	^ String streamContents: [ :stream |
+		stream nextPutAll: '\begin{tabular}{rr|rrrrrr}'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '& \bfseries count & \bfseries min & \bfseries 25\% & \bfseries median & \bfseries mean & \bfseries 75\% & \bfseries max \\' ; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: (self latexRowFor: 'All methods' counts: (self tokenCountsForMethods: methods)); cr.
+		stream nextPutAll: (self latexRowFor: 'Test methods' counts: (self tokenCountsForMethods: testMethods)); cr.
+		stream nextPutAll: (self latexRowFor: 'Non-test methods' counts: (self tokenCountsForMethods: nonTestMethods)); cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\end{tabular}'
+	]
+]
+
+{ #category : 'running' }
 CodeAnalysisRunner class >> latexTableForAllLocPerNonDataMethod [
 	| methods testMethods nonTestMethods |
 	methods := self nonDataMethodsInSelectedPackages.
@@ -292,6 +325,21 @@ CodeAnalysisRunner class >> methodsPerClassTexFileName [
 { #category : 'private' }
 CodeAnalysisRunner class >> nonDataMethodsInSelectedPackages [
 	^ self methodsInSelectedPackages reject: [ :each | self isDataMethod: each ]
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> tokenCountOfMethod: aCompiledMethod [
+	^ aCompiledMethod tokens size
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> tokenCountsForMethods: aCollectionOfMethods [
+	^ aCollectionOfMethods collect: [ :each | self tokenCountOfMethod: each ]
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> tokensPerMethodTexFileName [
+	^ 'all_tokens_per_method.tex'
 ]
 
 { #category : 'accessing' }
