@@ -1,13 +1,15 @@
 Class {
-	#name : #MethodCollector,
-	#superclass : #Object,
+	#name : 'MethodCollector',
+	#superclass : 'Object',
 	#instVars : [
 		'methodId'
 	],
-	#category : #'WWCodeAnalysis-Collectors'
+	#category : 'WWCodeAnalysis-Collectors',
+	#package : 'WWCodeAnalysis',
+	#tag : 'Collectors'
 }
 
-{ #category : #collecting }
+{ #category : 'collecting' }
 MethodCollector >> collectDataFromMethod: aMethod [
 	| method |
 	method := MethodModel new
@@ -29,7 +31,7 @@ MethodCollector >> collectDataFromMethod: aMethod [
 	^ method
 ]
 
-{ #category : #collecting }
+{ #category : 'collecting' }
 MethodCollector >> collectMethodsFromPackage: aPackage [
 	| methods |
 	methods := OrderedCollection new.
@@ -43,7 +45,7 @@ MethodCollector >> collectMethodsFromPackage: aPackage [
 		yourself
 ]
 
-{ #category : #collecting }
+{ #category : 'collecting' }
 MethodCollector >> collectMethodsFromProject: aProjectModel [
 	| packages packageModels count |
 	packageModels := OrderedCollection new.
@@ -62,7 +64,7 @@ MethodCollector >> collectMethodsFromProject: aProjectModel [
 	^ aProjectModel
 ]
 
-{ #category : #collecting }
+{ #category : 'collecting' }
 MethodCollector >> collectMethodsFromProjects: aCollectionOfProjectModels [
 	| count |
 	count := 1.
@@ -77,35 +79,35 @@ MethodCollector >> collectMethodsFromProjects: aCollectionOfProjectModels [
 	^ aCollectionOfProjectModels
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MethodCollector >> initialMethodId [
 	^ 1
 ]
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 MethodCollector >> initialize [
 	super initialize.
 	self methodId: self initialMethodId
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MethodCollector >> methodId [
 	^ methodId
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MethodCollector >> methodId: anObject [
 	methodId := anObject
 ]
 
-{ #category : #collecting }
+{ #category : 'collecting' }
 MethodCollector >> packagesOfProject: aProjectModel [
 	^ aProjectModel prefixes flatCollect: [ :prefix |
 		Smalltalk image packages select: [ :package |
 			package name beginsWith: prefix ] ]
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MethodCollector >> updateMethodId [
 	self methodId: self methodId + 1
 ]

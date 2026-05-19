@@ -1,6 +1,6 @@
 Class {
-	#name : #MethodModel,
-	#superclass : #Object,
+	#name : 'MethodModel',
+	#superclass : 'Object',
 	#instVars : [
 		'id',
 		'name',
@@ -15,30 +15,32 @@ Class {
 		'allWords',
 		'isTestClass'
 	],
-	#category : #'WWCodeAnalysis-Models'
+	#category : 'WWCodeAnalysis-Models',
+	#package : 'WWCodeAnalysis',
+	#tag : 'Models'
 }
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MethodModel >> allWords [
 	^ allWords
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MethodModel >> allWords: anObject [
 	allWords := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MethodModel >> id [
 	^ id
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MethodModel >> id: anObject [
 	id := anObject
 ]
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 MethodModel >> initialize [
 	super initialize.
 	tokens := #().
@@ -49,102 +51,102 @@ MethodModel >> initialize [
 	isTestClass := false
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MethodModel >> isTestClass [
 	^ isTestClass
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MethodModel >> isTestClass: anObject [
 	isTestClass := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MethodModel >> linesOfCode [
 	^ linesOfCode
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MethodModel >> linesOfCode: anObject [
 	linesOfCode := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MethodModel >> methodClass [
 	^ methodClass
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MethodModel >> methodClass: anObject [
 	methodClass := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MethodModel >> name [
 	^ name
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MethodModel >> name: anObject [
 	name := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MethodModel >> protocol [
 	^ protocol
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MethodModel >> protocol: anObject [
 	protocol := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MethodModel >> sourceCode [
 	^ sourceCode
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MethodModel >> sourceCode: anObject [
 	sourceCode := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MethodModel >> subtokens [
 	^ subtokens
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MethodModel >> subtokens: anObject [
 	subtokens := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MethodModel >> tokenTypes [
 	^ tokenTypes
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MethodModel >> tokenTypes: anObject [
 	tokenTypes := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MethodModel >> tokens [
 	^ tokens
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MethodModel >> tokens: anObject [
 	tokens := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MethodModel >> words [
 	^ words
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 MethodModel >> words: anObject [
 	words := anObject
 ]

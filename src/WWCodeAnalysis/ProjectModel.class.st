@@ -1,47 +1,49 @@
 Class {
-	#name : #ProjectModel,
-	#superclass : #Object,
+	#name : 'ProjectModel',
+	#superclass : 'Object',
 	#instVars : [
 		'packages',
 		'prefixes',
 		'name'
 	],
-	#category : #'WWCodeAnalysis-Models'
+	#category : 'WWCodeAnalysis-Models',
+	#package : 'WWCodeAnalysis',
+	#tag : 'Models'
 }
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 ProjectModel >> initialize [
 	super initialize.
 	packages := #().
 	prefixes := #()
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 ProjectModel >> name [
 	^ name
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 ProjectModel >> name: anObject [
 	name := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 ProjectModel >> packages [
 	^ packages
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 ProjectModel >> packages: anObject [
 	packages := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 ProjectModel >> prefixes [
 	^ prefixes
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 ProjectModel >> prefixes: anObject [
 	prefixes := anObject
 ]

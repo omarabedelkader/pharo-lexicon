@@ -1,6 +1,6 @@
 Class {
-	#name : #ExternalProjectModel,
-	#superclass : #ProjectModel,
+	#name : 'ExternalProjectModel',
+	#superclass : 'ProjectModel',
 	#instVars : [
 		'repositoryOwner',
 		'repositoryName',
@@ -8,45 +8,47 @@ Class {
 		'codeDirectory',
 		'group'
 	],
-	#category : #'WWCodeAnalysis-Models'
+	#category : 'WWCodeAnalysis-Models',
+	#package : 'WWCodeAnalysis',
+	#tag : 'Models'
 }
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 ExternalProjectModel >> codeDirectory [
 	^ codeDirectory
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 ExternalProjectModel >> codeDirectory: anObject [
 	codeDirectory := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 ExternalProjectModel >> commit [
 	^ commit
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 ExternalProjectModel >> commit: anObject [
 	commit := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 ExternalProjectModel >> group [
 	^ group
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 ExternalProjectModel >> group: anObject [
 	group := anObject
 ]
 
-{ #category : #actions }
+{ #category : 'actions' }
 ExternalProjectModel >> load [
 	self metacello load: self group
 ]
 
-{ #category : #metacello }
+{ #category : 'metacello' }
 ExternalProjectModel >> metacello [
 	^ Metacello new
 		baseline: self name;
@@ -64,22 +66,22 @@ ExternalProjectModel >> metacello [
 		onWarning: [ :exception | exception resume ]
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 ExternalProjectModel >> repositoryName [
 	^ repositoryName
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 ExternalProjectModel >> repositoryName: anObject [
 	repositoryName := anObject
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 ExternalProjectModel >> repositoryOwner [
 	^ repositoryOwner
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 ExternalProjectModel >> repositoryOwner: anObject [
 	repositoryOwner := anObject
 ]

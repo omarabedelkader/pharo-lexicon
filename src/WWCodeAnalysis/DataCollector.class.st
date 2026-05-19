@@ -1,22 +1,24 @@
 Class {
-	#name : #DataCollector,
-	#superclass : #Object,
+	#name : 'DataCollector',
+	#superclass : 'Object',
 	#instVars : [
 		'methodCollector',
 		'projectModels',
 		'workingDirectory'
 	],
-	#category : #'WWCodeAnalysis-Collectors'
+	#category : 'WWCodeAnalysis-Collectors',
+	#package : 'WWCodeAnalysis',
+	#tag : 'Collectors'
 }
 
-{ #category : #'instance creation' }
+{ #category : 'instance creation' }
 DataCollector class >> on: aFileReference [
 	^ self new
 		workingDirectory: aFileReference;
 		yourself
 ]
 
-{ #category : #running }
+{ #category : 'running' }
 DataCollector >> collect [
 	self readProjectsMetadata.
 	self collectMethods.
@@ -24,47 +26,25 @@ DataCollector >> collect [
 	^ self projectModels
 ]
 
-{ #category : #collecting }
+{ #category : 'collecting' }
 DataCollector >> collectMethods [
 	self subclassResponsibility
 ]
 
-{ #category : #converting }
+{ #category : 'converting' }
 DataCollector >> collectionAsString: aCollection [
 	aCollection ifNil: [ ^ '' ].
 	^ ' ' join: ((aCollection collect: [ :each | each asString ]) asArray)
 ]
 
-{ #category : #private }
-DataCollector >> csvEscape: anObject [
-	| string escaped |
-	string := anObject
-		ifNil: [ '' ]
-		ifNotNil: [
-			anObject isString
-				ifTrue: [ anObject ]
-				ifFalse: [ anObject asString ] ].
-
-	escaped := string copyReplaceAll: '"' with: '""'.
-	^ '"', escaped, '"'
-]
-
-{ #category : #private }
-DataCollector >> csvLineFrom: aCollection [
-	^ String streamContents: [ :stream |
-		aCollection doWithIndex: [ :each :index |
-			index > 1 ifTrue: [ stream nextPut: $, ].
-			stream nextPutAll: (self csvEscape: each) ] ]
-]
-
-{ #category : #saving }
+{ #category : 'saving' }
 DataCollector >> createAndSaveTables [
 	self
 		createAndSaveTablesFrom: self projectModels
 		into: self dataDirectory
 ]
 
-{ #category : #saving }
+{ #category : 'saving' }
 DataCollector >> createAndSaveTablesFrom: aCollectionOfProjectModels into: aDirectory [
 	aDirectory ensureCreateDirectory.
 
@@ -84,12 +64,34 @@ DataCollector >> createAndSaveTablesFrom: aCollectionOfProjectModels into: aDire
 		to: aDirectory / 'methods.csv'
 ]
 
-{ #category : #configuration }
+{ #category : 'private' }
+DataCollector >> csvEscape: anObject [
+	| string escaped |
+	string := anObject
+		ifNil: [ '' ]
+		ifNotNil: [
+			anObject isString
+				ifTrue: [ anObject ]
+				ifFalse: [ anObject asString ] ].
+
+	escaped := string copyReplaceAll: '"' with: '""'.
+	^ '"', escaped, '"'
+]
+
+{ #category : 'private' }
+DataCollector >> csvLineFrom: aCollection [
+	^ String streamContents: [ :stream |
+		aCollection doWithIndex: [ :each :index |
+			index > 1 ifTrue: [ stream nextPut: $, ].
+			stream nextPutAll: (self csvEscape: each) ] ]
+]
+
+{ #category : 'configuration' }
 DataCollector >> dataDirectory [
 	self subclassResponsibility
 ]
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 DataCollector >> initialize [
 	super initialize.
 	projectModels := #().
@@ -97,17 +99,17 @@ DataCollector >> initialize [
 	workingDirectory := FileSystem disk workingDirectory.
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 DataCollector >> methodCollector [
 	^ methodCollector
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 DataCollector >> methodCollector: anObject [
 	methodCollector := anObject
 ]
 
-{ #category : #private }
+{ #category : 'private' }
 DataCollector >> methodCsvHeaders [
 	^ #(
 		'projectName'
@@ -127,7 +129,7 @@ DataCollector >> methodCsvHeaders [
 	)
 ]
 
-{ #category : #private }
+{ #category : 'private' }
 DataCollector >> methodRowsFrom: aCollectionOfProjectModels [
 	| rows |
 	rows := OrderedCollection new.
@@ -154,12 +156,12 @@ DataCollector >> methodRowsFrom: aCollectionOfProjectModels [
 	^ rows asArray
 ]
 
-{ #category : #private }
+{ #category : 'private' }
 DataCollector >> methodsIn: aPackageModel [
 	^ aPackageModel methods ifNil: [ #() ]
 ]
 
-{ #category : #private }
+{ #category : 'private' }
 DataCollector >> packageCsvHeaders [
 	^ #(
 		'projectName'
@@ -168,7 +170,7 @@ DataCollector >> packageCsvHeaders [
 	)
 ]
 
-{ #category : #private }
+{ #category : 'private' }
 DataCollector >> packageRowsFrom: aCollectionOfProjectModels [
 	| rows |
 	rows := OrderedCollection new.
@@ -183,12 +185,12 @@ DataCollector >> packageRowsFrom: aCollectionOfProjectModels [
 	^ rows asArray
 ]
 
-{ #category : #private }
+{ #category : 'private' }
 DataCollector >> packagesIn: aProjectModel [
 	^ aProjectModel packages ifNil: [ #() ]
 ]
 
-{ #category : #private }
+{ #category : 'private' }
 DataCollector >> projectCsvHeaders [
 	^ #(
 		'projectName'
@@ -197,17 +199,17 @@ DataCollector >> projectCsvHeaders [
 	)
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 DataCollector >> projectModels [
 	^ projectModels
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 DataCollector >> projectModels: anObject [
 	projectModels := anObject
 ]
 
-{ #category : #private }
+{ #category : 'private' }
 DataCollector >> projectRowsFrom: aCollectionOfProjectModels [
 	^ aCollectionOfProjectModels collect: [ :projectModel |
 		Dictionary newFrom: {
@@ -216,17 +218,27 @@ DataCollector >> projectRowsFrom: aCollectionOfProjectModels [
 			'packageCount' -> (self packagesIn: projectModel) size } ]
 ]
 
-{ #category : #configuration }
+{ #category : 'configuration' }
 DataCollector >> projectsFile [
 	self subclassResponsibility
 ]
 
-{ #category : #reading }
+{ #category : 'reading' }
 DataCollector >> readProjectsMetadata [
 	self subclassResponsibility
 ]
 
-{ #category : #saving }
+{ #category : 'accessing' }
+DataCollector >> workingDirectory [
+	^ workingDirectory
+]
+
+{ #category : 'accessing' }
+DataCollector >> workingDirectory: anObject [
+	workingDirectory := anObject
+]
+
+{ #category : 'saving' }
 DataCollector >> writeCsvRows: rows headers: headers to: aFileReference [
 	aFileReference exists ifTrue: [ aFileReference delete ].
 
@@ -239,14 +251,4 @@ DataCollector >> writeCsvRows: rows headers: headers to: aFileReference [
 			stream
 				nextPutAll: (self csvLineFrom: (headers collect: [ :header | row at: header ifAbsent: [ '' ] ]));
 				cr ] ]
-]
-
-{ #category : #accessing }
-DataCollector >> workingDirectory [
-	^ workingDirectory
-]
-
-{ #category : #accessing }
-DataCollector >> workingDirectory: anObject [
-	workingDirectory := anObject
 ]

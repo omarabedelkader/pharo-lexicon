@@ -1,15 +1,17 @@
 Class {
-	#name : #TokenTypesCollectingVisitor,
-	#superclass : #TokensCollectingVisitor,
-	#category : #'WWCodeAnalysis-Tokenization'
+	#name : 'TokenTypesCollectingVisitor',
+	#superclass : 'TokensCollectingVisitor',
+	#category : 'WWCodeAnalysis-Tokenization',
+	#package : 'WWCodeAnalysis',
+	#tag : 'Tokenization'
 }
 
-{ #category : #adding }
+{ #category : 'adding' }
 TokenTypesCollectingVisitor >> addComments: aCollectionOfComments [
 	tokens addAll: (aCollectionOfComments collect: [ :each | 'COM' ])
 ]
 
-{ #category : #encoding }
+{ #category : 'encoding' }
 TokenTypesCollectingVisitor >> encodeLiteral: aLiteral [
 	aLiteral isNumber ifTrue: [ ^ 'NUM' ].
 	aLiteral isSymbol ifTrue: [ ^ 'SYM' ].
@@ -21,12 +23,12 @@ TokenTypesCollectingVisitor >> encodeLiteral: aLiteral [
 	^ aLiteral asString
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 TokenTypesCollectingVisitor >> visitArgumentNode: anArgumentNode [
 	tokens add: 'ARG'
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 TokenTypesCollectingVisitor >> visitArrayNode: aLiteralNode [
 	tokens add: 'CB1'.
 
@@ -40,14 +42,14 @@ TokenTypesCollectingVisitor >> visitArrayNode: aLiteralNode [
 	tokens add: 'CB2'
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 TokenTypesCollectingVisitor >> visitAssignmentNode: anAssignment [
 	self visitNode: anAssignment variable.
 	tokens add: 'ASS'.
 	self visitNode: anAssignment value
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 TokenTypesCollectingVisitor >> visitBlockNode: aBlockNode [
 	tokens add: 'SB1'.
 
@@ -61,7 +63,7 @@ TokenTypesCollectingVisitor >> visitBlockNode: aBlockNode [
 	tokens add: 'SB2'
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 TokenTypesCollectingVisitor >> visitGlobalNode: aGlobalNode [
 	(Smalltalk globals includesKey: aGlobalNode name)
 		ifFalse: [
@@ -72,24 +74,24 @@ TokenTypesCollectingVisitor >> visitGlobalNode: aGlobalNode [
 				ifFalse: [ 'GLB' ]) ]
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 TokenTypesCollectingVisitor >> visitLiteralArrayNode: aLiteralNode [
 	tokens add: 'ARR'
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 TokenTypesCollectingVisitor >> visitLiteralNode: aLiteralNode [
 	tokens add: (self encodeLiteral: aLiteralNode value)
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 TokenTypesCollectingVisitor >> visitMessageNode: aMessageNode [
 	self visitNode: aMessageNode receiver.
 	tokens add: 'MSG'.
 	aMessageNode arguments do: [ :each | self visitNode: each ]
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 TokenTypesCollectingVisitor >> visitMethodNode: aMethodNode [
 	self addCommentsFrom: aMethodNode.
 
@@ -98,18 +100,18 @@ TokenTypesCollectingVisitor >> visitMethodNode: aMethodNode [
 			ifTrue: [ self visitNode: each ] ]
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 TokenTypesCollectingVisitor >> visitReturnNode: aReturnNode [
 	tokens add: 'RET'.
 	aReturnNode children do: [ :each | self visitNode: each ]
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 TokenTypesCollectingVisitor >> visitSelfNode: aNode [
 	tokens add: 'SLF'
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 TokenTypesCollectingVisitor >> visitSequenceNode: aSequence [
 	aSequence temporaries size > 0
 		ifTrue: [
@@ -122,22 +124,22 @@ TokenTypesCollectingVisitor >> visitSequenceNode: aSequence [
 		tokens add: 'DOT' ]
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 TokenTypesCollectingVisitor >> visitSuperNode: aNode [
 	tokens add: 'SUP'
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 TokenTypesCollectingVisitor >> visitTemporaryNode: aTemporaryNode [
 	tokens add: 'TMP'
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 TokenTypesCollectingVisitor >> visitThisContextNode: aNode [
 	tokens add: 'THS'
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 TokenTypesCollectingVisitor >> visitVariableNode: aVariableNode [
 	tokens add: 'VAR'
 ]

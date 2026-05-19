@@ -1,10 +1,12 @@
 Class {
-	#name : #ProjectsReader,
-	#superclass : #Object,
-	#category : #'WWCodeAnalysis-Models'
+	#name : 'ProjectsReader',
+	#superclass : 'Object',
+	#category : 'WWCodeAnalysis-Models',
+	#package : 'WWCodeAnalysis',
+	#tag : 'Models'
 }
 
-{ #category : #'instance creation' }
+{ #category : 'instance creation' }
 ProjectsReader class >> readExternalProjectsFrom: aFileReference [
 	| projects |
 	projects := DataFrame readFromCsv: aFileReference.
@@ -21,7 +23,7 @@ ProjectsReader class >> readExternalProjectsFrom: aFileReference [
 			yourself ]
 ]
 
-{ #category : #'instance creation' }
+{ #category : 'instance creation' }
 ProjectsReader class >> readInternalProjectsFrom: aFileReference [
 	| projects |
 	projects := DataFrame readFromCsv: aFileReference.

@@ -1,15 +1,17 @@
 Class {
-	#name : #SubtokensCollectingVisitor,
-	#superclass : #TokensCollectingVisitor,
-	#category : #'WWCodeAnalysis-Tokenization'
+	#name : 'SubtokensCollectingVisitor',
+	#superclass : 'TokensCollectingVisitor',
+	#category : 'WWCodeAnalysis-Tokenization',
+	#package : 'WWCodeAnalysis',
+	#tag : 'Tokenization'
 }
 
-{ #category : #adding }
+{ #category : 'adding' }
 SubtokensCollectingVisitor >> addComments: aCollectionOfComments [
 	"Subtoken streams intentionally ignore comments."
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 SubtokensCollectingVisitor >> encodeLiteral: aLiteral [
 	aLiteral isNumber ifTrue: [ ^ '<num>' ].
 	aLiteral isSymbol ifTrue: [ ^ '<sym>' ].
@@ -18,7 +20,7 @@ SubtokensCollectingVisitor >> encodeLiteral: aLiteral [
 	^ aLiteral asString
 ]
 
-{ #category : #splitting }
+{ #category : 'splitting' }
 SubtokensCollectingVisitor >> extractSubtokens: aString [
 	^ (aString splitIdentifierName collect: #asLowercase)
 		collect: [ :each |
@@ -27,12 +29,12 @@ SubtokensCollectingVisitor >> extractSubtokens: aString [
 				do: [ each ] ]
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 SubtokensCollectingVisitor >> visitArgumentNode: anArgumentNode [
 	tokens addAll: (self extractSubtokens: anArgumentNode name asString)
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 SubtokensCollectingVisitor >> visitBlockNode: aBlockNode [
 	tokens add: '['.
 
@@ -47,22 +49,22 @@ SubtokensCollectingVisitor >> visitBlockNode: aBlockNode [
 	tokens add: ']'
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 SubtokensCollectingVisitor >> visitGlobalNode: aGlobalNode [
 	tokens addAll: (self extractSubtokens: aGlobalNode name asString)
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 SubtokensCollectingVisitor >> visitLiteralArrayNode: aLiteralNode [
 	tokens add: '<arr>'
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 SubtokensCollectingVisitor >> visitLiteralNode: aLiteralNode [
 	tokens add: (self encodeLiteral: aLiteralNode value)
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 SubtokensCollectingVisitor >> visitMessageNode: aMessageNode [
 	self visitNode: aMessageNode receiver.
 
@@ -75,12 +77,12 @@ SubtokensCollectingVisitor >> visitMessageNode: aMessageNode [
 				self visitNode: (aMessageNode arguments at: index) ] ]
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 SubtokensCollectingVisitor >> visitTemporaryNode: aTemporaryNode [
 	tokens addAll: (self extractSubtokens: aTemporaryNode name asString)
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 SubtokensCollectingVisitor >> visitVariableNode: aVariableNode [
 	tokens addAll: (self extractSubtokens: aVariableNode name asString)
 ]

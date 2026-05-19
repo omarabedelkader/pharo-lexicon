@@ -1,18 +1,20 @@
 Class {
-	#name : #TokensCollectingVisitor,
-	#superclass : #OCProgramNodeVisitor,
+	#name : 'TokensCollectingVisitor',
+	#superclass : 'OCProgramNodeVisitor',
 	#instVars : [
 		'tokens'
 	],
-	#category : #'WWCodeAnalysis-Tokenization'
+	#category : 'WWCodeAnalysis-Tokenization',
+	#package : 'WWCodeAnalysis',
+	#tag : 'Tokenization'
 }
 
-{ #category : #adding }
+{ #category : 'adding' }
 TokensCollectingVisitor >> addComments: aCollectionOfComments [
 	tokens addAll: aCollectionOfComments
 ]
 
-{ #category : #adding }
+{ #category : 'adding' }
 TokensCollectingVisitor >> addCommentsFrom: aNode [
 	aNode ifNil: [ ^ self ].
 
@@ -20,23 +22,23 @@ TokensCollectingVisitor >> addCommentsFrom: aNode [
 		ifTrue: [ self addComments: aNode commentsAsCleanStrings ]
 ]
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 TokensCollectingVisitor >> initialize [
 	super initialize.
 	tokens := OrderedCollection new
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 TokensCollectingVisitor >> tokens [
 	^ tokens
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 TokensCollectingVisitor >> visitArgumentNode: anArgumentNode [
 	tokens add: anArgumentNode name asString
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 TokensCollectingVisitor >> visitArrayNode: aLiteralNode [
 	tokens add: '{'.
 
@@ -50,14 +52,14 @@ TokensCollectingVisitor >> visitArrayNode: aLiteralNode [
 	tokens add: '}'
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 TokensCollectingVisitor >> visitAssignmentNode: anAssignment [
 	self visitNode: anAssignment variable.
 	tokens add: ':='.
 	self visitNode: anAssignment value
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 TokensCollectingVisitor >> visitBlockNode: aBlockNode [
 	tokens add: '['.
 
@@ -71,29 +73,29 @@ TokensCollectingVisitor >> visitBlockNode: aBlockNode [
 	tokens add: ']'
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 TokensCollectingVisitor >> visitGlobalNode: aGlobalNode [
 	tokens add: aGlobalNode name asString
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 TokensCollectingVisitor >> visitLiteralArrayNode: aLiteralNode [
 	tokens add: (' ' join: aLiteralNode value fullPrintString substrings)
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 TokensCollectingVisitor >> visitLiteralNode: aLiteralNode [
 	tokens add: (' ' join: aLiteralNode value asString substrings)
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 TokensCollectingVisitor >> visitMessageNode: aMessageNode [
 	self visitNode: aMessageNode receiver.
 	tokens add: aMessageNode selector asString.
 	aMessageNode arguments do: [ :each | self visitNode: each ]
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 TokensCollectingVisitor >> visitMethodNode: aMethodNode [
 	self addCommentsFrom: aMethodNode.
 
@@ -102,19 +104,19 @@ TokensCollectingVisitor >> visitMethodNode: aMethodNode [
 			ifTrue: [ self visitNode: each ] ]
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 TokensCollectingVisitor >> visitNode: aNode [
 	super visitNode: aNode.
 	self addCommentsFrom: aNode
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 TokensCollectingVisitor >> visitReturnNode: aReturnNode [
 	tokens add: '^'.
 	aReturnNode children do: [ :each | self visitNode: each ]
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 TokensCollectingVisitor >> visitSequenceNode: aNode [
 	aNode temporaries size > 0
 		ifTrue: [
@@ -127,12 +129,12 @@ TokensCollectingVisitor >> visitSequenceNode: aNode [
 		tokens add: '.' ]
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 TokensCollectingVisitor >> visitTemporaryNode: aTemporaryNode [
 	tokens add: aTemporaryNode name asString
 ]
 
-{ #category : #visiting }
+{ #category : 'visiting' }
 TokensCollectingVisitor >> visitVariableNode: aVariableNode [
 	tokens add: aVariableNode name asString
 ]

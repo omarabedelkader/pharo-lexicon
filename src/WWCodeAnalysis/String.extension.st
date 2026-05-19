@@ -1,6 +1,6 @@
-Extension { #name : #String }
+Extension { #name : 'String' }
 
-{ #category : #'*WWCodeAnalysis' }
+{ #category : '*WWCodeAnalysis' }
 String >> isAllLetters [
 	"Return whether the receiver is composed entirely of letters and has at least one letter."
 
@@ -11,7 +11,7 @@ String >> isAllLetters [
 	^ true
 ]
 
-{ #category : #'*WWCodeAnalysis' }
+{ #category : '*WWCodeAnalysis' }
 String >> splitIdentifierName [
 	^ IdentifierNameSplitter instance splitIdentifierName: self
 ]

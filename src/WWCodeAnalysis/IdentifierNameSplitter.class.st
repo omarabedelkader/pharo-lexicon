@@ -1,6 +1,6 @@
 Class {
-	#name : #IdentifierNameSplitter,
-	#superclass : #Object,
+	#name : 'IdentifierNameSplitter',
+	#superclass : 'Object',
 	#instVars : [
 		'abbreviationsRegex1',
 		'abbreviationsRegex2',
@@ -12,20 +12,22 @@ Class {
 	#classInstVars : [
 		'instance'
 	],
-	#category : #'WWCodeAnalysis-Splitting'
+	#category : 'WWCodeAnalysis-Splitting',
+	#package : 'WWCodeAnalysis',
+	#tag : 'Splitting'
 }
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 IdentifierNameSplitter class >> instance [
 	^ instance ifNil: [ instance := self new ]
 ]
 
-{ #category : #accessing }
+{ #category : 'accessing' }
 IdentifierNameSplitter class >> resetInstance [
 	instance := nil
 ]
 
-{ #category : #initialization }
+{ #category : 'initialization' }
 IdentifierNameSplitter >> initialize [
 	"Regular expression creation is expensive. Keep compiled regexes on the splitter instance."
 	super initialize.
@@ -38,7 +40,7 @@ IdentifierNameSplitter >> initialize [
 	numbersRegex := '\d+|\D+' asRegex
 ]
 
-{ #category : #splitting }
+{ #category : 'splitting' }
 IdentifierNameSplitter >> separateAbbreviationsIn: aString [
 	| str suffix words |
 	aString isEmpty ifTrue: [ ^ OrderedCollection new ].
@@ -69,22 +71,22 @@ IdentifierNameSplitter >> separateAbbreviationsIn: aString [
 	^ words
 ]
 
-{ #category : #splitting }
+{ #category : 'splitting' }
 IdentifierNameSplitter >> separateCamelCaseIn: aString [
 	^ camelCaseRegex matchesIn: aString collect: #value
 ]
 
-{ #category : #splitting }
+{ #category : 'splitting' }
 IdentifierNameSplitter >> separateNonAlphanumericIn: aString [
 	^ nonAlphanumericRegex matchesIn: aString collect: #value
 ]
 
-{ #category : #splitting }
+{ #category : 'splitting' }
 IdentifierNameSplitter >> separateNumbersIn: aString [
 	^ numbersRegex matchesIn: aString collect: #value
 ]
 
-{ #category : #splitting }
+{ #category : 'splitting' }
 IdentifierNameSplitter >> splitIdentifierName: aString [
 	| words |
 	aString isEmpty ifTrue: [ ^ OrderedCollection new ].

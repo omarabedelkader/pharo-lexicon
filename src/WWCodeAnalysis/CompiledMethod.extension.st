@@ -1,11 +1,11 @@
-Extension { #name : #CompiledMethod }
+Extension { #name : 'CompiledMethod' }
 
-{ #category : #'*WWCodeAnalysis' }
+{ #category : '*WWCodeAnalysis' }
 CompiledMethod >> codeAnalysisParseTree [
 	^ OCParser parseMethod: self sourceCode
 ]
 
-{ #category : #'*WWCodeAnalysis' }
+{ #category : '*WWCodeAnalysis' }
 CompiledMethod >> collectTokensUsing: aVisitorClass [
 	| visitor |
 	visitor := aVisitorClass new.
@@ -13,34 +13,34 @@ CompiledMethod >> collectTokensUsing: aVisitorClass [
 	^ visitor tokens asArray
 ]
 
-{ #category : #'*WWCodeAnalysis' }
+{ #category : '*WWCodeAnalysis' }
 CompiledMethod >> linesOfCode [
 	^ self sourceCode lines size
 ]
 
-{ #category : #'*WWCodeAnalysis' }
+{ #category : '*WWCodeAnalysis' }
 CompiledMethod >> subtokens [
 	^ self collectTokensUsing: SubtokensCollectingVisitor
 ]
 
-{ #category : #'*WWCodeAnalysis' }
+{ #category : '*WWCodeAnalysis' }
 CompiledMethod >> tokenTypes [
 	^ self collectTokensUsing: TokenTypesCollectingVisitor
 ]
 
-{ #category : #'*WWCodeAnalysis' }
+{ #category : '*WWCodeAnalysis' }
 CompiledMethod >> tokens [
 	^ self collectTokensUsing: TokensCollectingVisitor
 ]
 
-{ #category : #'*WWCodeAnalysis' }
+{ #category : '*WWCodeAnalysis' }
 CompiledMethod >> wordsFromIdentifierNames [
 	^ ((self subtokens
 		select: [ :each | each isAllLetters ])
 		collect: [ :each | each asLowercase ]) asArray
 ]
 
-{ #category : #'*WWCodeAnalysis' }
+{ #category : '*WWCodeAnalysis' }
 CompiledMethod >> wordsFromSourceCode [
 	^ (((self sourceCode substrings
 		flatCollect: [ :each | each splitIdentifierName ])

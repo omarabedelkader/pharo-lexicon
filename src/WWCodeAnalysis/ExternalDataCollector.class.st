@@ -1,10 +1,12 @@
 Class {
-	#name : #ExternalDataCollector,
-	#superclass : #DataCollector,
-	#category : #'WWCodeAnalysis-Collectors'
+	#name : 'ExternalDataCollector',
+	#superclass : 'DataCollector',
+	#category : 'WWCodeAnalysis-Collectors',
+	#package : 'WWCodeAnalysis',
+	#tag : 'Collectors'
 }
 
-{ #category : #collecting }
+{ #category : 'collecting' }
 ExternalDataCollector >> collectMethods [
 	self projectModels do: [ :projectModel |
 		projectModel load.
@@ -16,22 +18,22 @@ ExternalDataCollector >> collectMethods [
 			into: self dataDirectory / projectModel name ]
 ]
 
-{ #category : #saving }
+{ #category : 'saving' }
 ExternalDataCollector >> createAndSaveTables [
 	"External projects are saved one project at a time while being collected."
 ]
 
-{ #category : #configuration }
+{ #category : 'configuration' }
 ExternalDataCollector >> dataDirectory [
 	^ self workingDirectory / 'data' / 'external'
 ]
 
-{ #category : #configuration }
+{ #category : 'configuration' }
 ExternalDataCollector >> projectsFile [
 	^ self workingDirectory / 'projects' / 'external-projects.csv'
 ]
 
-{ #category : #reading }
+{ #category : 'reading' }
 ExternalDataCollector >> readProjectsMetadata [
 	self projectModels: (ProjectsReader readExternalProjectsFrom: self projectsFile)
 ]
