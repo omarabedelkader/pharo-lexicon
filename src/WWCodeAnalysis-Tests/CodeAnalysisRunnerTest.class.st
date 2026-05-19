@@ -35,7 +35,8 @@ CodeAnalysisRunnerTest >> testStatisticsForCounts [
 { #category : 'tests' }
 CodeAnalysisRunnerTest >> testTexFileName [
 	self assert: CodeAnalysisRunner classesPerPackageTexFileName equals: 'all_classes_per_package.tex'.
-	self assert: CodeAnalysisRunner locPerMethodTexFileName equals: 'all_loc_per_method.tex'
+	self assert: CodeAnalysisRunner locPerMethodTexFileName equals: 'all_loc_per_method.tex'.
+	self assert: CodeAnalysisRunner locPerNonDataMethodTexFileName equals: 'all_loc_per_non_data_method.tex'
 ]
 
 { #category : 'tests' }

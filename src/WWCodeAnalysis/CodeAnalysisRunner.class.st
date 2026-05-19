@@ -37,6 +37,19 @@ CodeAnalysisRunner class >> alllocpermethod [
 ]
 
 { #category : 'running' }
+CodeAnalysisRunner class >> allLocPerNonDataMethod [
+	| table |
+	table := self latexTableForAllLocPerNonDataMethod.
+	self write: table to: self locPerNonDataMethodTexFileName.
+	^ table
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> alllocpernondatamethod [
+	^ self allLocPerNonDataMethod
+]
+
+{ #category : 'running' }
 CodeAnalysisRunner class >> allClassesPerPackageForPackagesNamed: aCollection [
 	self defaultPackages: aCollection.
 	^ self allClassesPerPackage
@@ -105,6 +118,13 @@ CodeAnalysisRunner class >> isTestMethod: aCompiledMethod [
 ]
 
 { #category : 'private' }
+CodeAnalysisRunner class >> isDataMethod: aCompiledMethod [
+	| protocolName |
+	protocolName := aCompiledMethod protocol asLowercase.
+	^ protocolName includesSubstring: 'accessing'
+]
+
+{ #category : 'private' }
 CodeAnalysisRunner class >> latexRowFor: aLabel counts: counts [
 	| summary |
 	summary := self statisticsForCounts: counts.
@@ -160,6 +180,26 @@ CodeAnalysisRunner class >> latexTableForAllLocPerMethod [
 ]
 
 { #category : 'running' }
+CodeAnalysisRunner class >> latexTableForAllLocPerNonDataMethod [
+	| methods testMethods nonTestMethods |
+	methods := self nonDataMethodsInSelectedPackages.
+	testMethods := methods select: [ :each | self isTestMethod: each ].
+	nonTestMethods := methods reject: [ :each | self isTestMethod: each ].
+
+	^ String streamContents: [ :stream |
+		stream nextPutAll: '\begin{tabular}{rr|rrrrrr}'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '& \bfseries count & \bfseries min & \bfseries 25\% & \bfseries median & \bfseries mean & \bfseries 75\% & \bfseries max \\' ; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: (self latexRowFor: 'All methods' counts: (self linesOfCodeForMethods: methods)); cr.
+		stream nextPutAll: (self latexRowFor: 'Test methods' counts: (self linesOfCodeForMethods: testMethods)); cr.
+		stream nextPutAll: (self latexRowFor: 'Non-test methods' counts: (self linesOfCodeForMethods: nonTestMethods)); cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\end{tabular}'
+	]
+]
+
+{ #category : 'running' }
 CodeAnalysisRunner class >> saveDefaultPackagesAnalysisToTex [
 	^ self allClassesPerPackage
 ]
@@ -174,9 +214,19 @@ CodeAnalysisRunner class >> locPerMethodTexFileName [
 	^ 'all_loc_per_method.tex'
 ]
 
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> locPerNonDataMethodTexFileName [
+	^ 'all_loc_per_non_data_method.tex'
+]
+
 { #category : 'private' }
 CodeAnalysisRunner class >> methodsInSelectedPackages [
 	^ self selectedPackages flatCollect: [ :each | each methods ]
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> nonDataMethodsInSelectedPackages [
+	^ self methodsInSelectedPackages reject: [ :each | self isDataMethod: each ]
 ]
 
 { #category : 'accessing' }
