@@ -50,6 +50,19 @@ CodeAnalysisRunner class >> alllocpernondatamethod [
 ]
 
 { #category : 'running' }
+CodeAnalysisRunner class >> allMethodsPerClass [
+	| table |
+	table := self latexTableForAllMethodsPerClass.
+	self write: table to: self methodsPerClassTexFileName.
+	^ table
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> allmethodsperclass [
+	^ self allMethodsPerClass
+]
+
+{ #category : 'running' }
 CodeAnalysisRunner class >> allClassesPerPackageForPackagesNamed: aCollection [
 	self defaultPackages: aCollection.
 	^ self allClassesPerPackage
@@ -64,6 +77,18 @@ CodeAnalysisRunner class >> classCountsFor: aCollectionOfPackages [
 CodeAnalysisRunner class >> classCountOf: aPackage [
 	(aPackage respondsTo: #definedClasses) ifTrue: [ ^ aPackage definedClasses size ].
 	(aPackage respondsTo: #classes) ifTrue: [ ^ aPackage classes size ].
+	self error: 'Unsupported package object: ', aPackage class name
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> classesInSelectedPackages [
+	^ self selectedPackages flatCollect: [ :each | self classesOfPackage: each ]
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> classesOfPackage: aPackage [
+	(aPackage respondsTo: #definedClasses) ifTrue: [ ^ aPackage definedClasses ].
+	(aPackage respondsTo: #classes) ifTrue: [ ^ aPackage classes ].
 	self error: 'Unsupported package object: ', aPackage class name
 ]
 
@@ -125,6 +150,11 @@ CodeAnalysisRunner class >> isDataMethod: aCompiledMethod [
 ]
 
 { #category : 'private' }
+CodeAnalysisRunner class >> isTestClass: aClass [
+	^ aClass isTestCase
+]
+
+{ #category : 'private' }
 CodeAnalysisRunner class >> latexRowFor: aLabel counts: counts [
 	| summary |
 	summary := self statisticsForCounts: counts.
@@ -180,6 +210,26 @@ CodeAnalysisRunner class >> latexTableForAllLocPerMethod [
 ]
 
 { #category : 'running' }
+CodeAnalysisRunner class >> latexTableForAllMethodsPerClass [
+	| classes testClasses nonTestClasses |
+	classes := self classesInSelectedPackages.
+	testClasses := classes select: [ :each | self isTestClass: each ].
+	nonTestClasses := classes reject: [ :each | self isTestClass: each ].
+
+	^ String streamContents: [ :stream |
+		stream nextPutAll: '\begin{tabular}{rr|rrrrrr}'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '& \bfseries count & \bfseries min & \bfseries 25\% & \bfseries median & \bfseries mean & \bfseries 75\% & \bfseries max \\' ; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: (self latexRowFor: 'All classes' counts: (self methodCountsForClasses: classes)); cr.
+		stream nextPutAll: (self latexRowFor: 'Test classes' counts: (self methodCountsForClasses: testClasses)); cr.
+		stream nextPutAll: (self latexRowFor: 'Non-test classes' counts: (self methodCountsForClasses: nonTestClasses)); cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\end{tabular}'
+	]
+]
+
+{ #category : 'running' }
 CodeAnalysisRunner class >> latexTableForAllLocPerNonDataMethod [
 	| methods testMethods nonTestMethods |
 	methods := self nonDataMethodsInSelectedPackages.
@@ -220,8 +270,23 @@ CodeAnalysisRunner class >> locPerNonDataMethodTexFileName [
 ]
 
 { #category : 'private' }
+CodeAnalysisRunner class >> methodCountOfClass: aClass [
+	^ aClass methods size
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> methodCountsForClasses: aCollectionOfClasses [
+	^ aCollectionOfClasses collect: [ :each | self methodCountOfClass: each ]
+]
+
+{ #category : 'private' }
 CodeAnalysisRunner class >> methodsInSelectedPackages [
 	^ self selectedPackages flatCollect: [ :each | each methods ]
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> methodsPerClassTexFileName [
+	^ 'all_methods_per_class.tex'
 ]
 
 { #category : 'private' }
