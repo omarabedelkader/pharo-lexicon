@@ -1,13 +1,13 @@
-Extension { #name : #RBProgramNode }
+Extension { #name : #OCProgramNode }
 
 { #category : #'*WWCodeAnalysis' }
-RBProgramNode >> commentStrings [
+OCProgramNode >> commentStrings [
 	"A compatibility hook used by the token visitors."
 	^ self commentsAsCleanStrings
 ]
 
 { #category : #'*WWCodeAnalysis' }
-RBProgramNode >> commentsAsCleanStrings [
+OCProgramNode >> commentsAsCleanStrings [
 	"Remove tabs and newlines from comments."
 	^ self comments collect: [ :each |
 		' ' join: each contents substrings ]

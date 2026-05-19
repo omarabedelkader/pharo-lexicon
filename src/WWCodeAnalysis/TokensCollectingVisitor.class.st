@@ -1,6 +1,6 @@
 Class {
 	#name : #TokensCollectingVisitor,
-	#superclass : #RBProgramNodeVisitor,
+	#superclass : #OCProgramNodeVisitor,
 	#instVars : [
 		'tokens'
 	],

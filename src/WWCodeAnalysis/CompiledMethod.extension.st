@@ -2,7 +2,7 @@ Extension { #name : #CompiledMethod }
 
 { #category : #'*WWCodeAnalysis' }
 CompiledMethod >> codeAnalysisParseTree [
-	^ RBParser parseMethod: self sourceCode
+	^ OCParser parseMethod: self sourceCode
 ]
 
 { #category : #'*WWCodeAnalysis' }
