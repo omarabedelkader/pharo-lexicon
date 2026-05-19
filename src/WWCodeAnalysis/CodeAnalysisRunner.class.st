@@ -276,7 +276,9 @@ CodeAnalysisRunner class >> isTestMethod: aCompiledMethod [
 { #category : 'private' }
 CodeAnalysisRunner class >> isDataMethod: aCompiledMethod [
 	| protocolName |
-	protocolName := aCompiledMethod protocol asLowercase.
+	protocolName := aCompiledMethod protocol
+		ifNil: [ '' ]
+		ifNotNil: [ :protocol | protocol asString asLowercase ].
 	^ protocolName includesSubstring: 'accessing'
 ]
 
