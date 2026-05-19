@@ -25,7 +25,7 @@ CodeAnalysisRunner class >> allclassesperpackage [
 
 { #category : 'running' }
 CodeAnalysisRunner class >> allClassesPerPackageForPackagesNamed: aCollection [
-	self packageNames: aCollection.
+	self defaultPackages: aCollection.
 	^ self allClassesPerPackage
 ]
 
@@ -39,6 +39,28 @@ CodeAnalysisRunner class >> classCountOf: aPackage [
 	(aPackage respondsTo: #definedClasses) ifTrue: [ ^ aPackage definedClasses size ].
 	(aPackage respondsTo: #classes) ifTrue: [ ^ aPackage classes size ].
 	self error: 'Unsupported package object: ', aPackage class name
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> defaultPackages [
+	"Define the package names to analyze here, for example:
+	#('Kernel' 'Collections-Sequenceable')"
+	^ #()
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> defaultpackages [
+	^ self defaultPackages
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> defaultPackages: aCollection [
+	self packageNames: aCollection
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> defaultpackages: aCollection [
+	^ self defaultPackages: aCollection
 ]
 
 { #category : 'private' }
@@ -139,8 +161,15 @@ CodeAnalysisRunner class >> percentile: aFraction ofSorted: aSortedCollection [
 
 { #category : 'private' }
 CodeAnalysisRunner class >> selectedPackages [
-	self packageNames ifEmpty: [ self error: 'No package names configured' ].
-	^ self packageNames collect: [ :each | self packageNamed: each ]
+	| configuredPackageNames |
+	configuredPackageNames := self selectedPackageNames.
+	configuredPackageNames ifEmpty: [ self error: 'No package names configured' ].
+	^ configuredPackageNames collect: [ :each | self packageNamed: each ]
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> selectedPackageNames [
+	^ self packageNames ifEmpty: [ self defaultPackages ]
 ]
 
 { #category : 'private' }
