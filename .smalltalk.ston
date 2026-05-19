@@ -1,0 +1,9 @@
+SmalltalkCISpec {
+  #loading : [
+    SCIMetacelloLoadSpec {
+      #baseline : 'PharoLexicon',
+      #directory : 'src',
+      #platforms : [ #pharo ]
+    }
+  ]
+}
