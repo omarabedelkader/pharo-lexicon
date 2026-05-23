@@ -100,6 +100,17 @@ CodeAnalysisRunnerTest >> testOutputDirectorySetterCoercesToFileReference [
 ]
 
 { #category : 'tests' }
+CodeAnalysisRunnerTest >> testSaveReportNamedReturnsErrorReportWhenGenerationFails [
+	| contents |
+	contents := CodeAnalysisRunner
+		saveReportNamed: 'ignored.tex'
+		generatedBy: [ Error signal: 'boom' ].
+
+	self assert: (contents includesSubstring: 'Error generating report').
+	self assert: (contents includesSubstring: 'boom')
+]
+
+{ #category : 'tests' }
 CodeAnalysisRunnerTest >> testLatexRowForIdentifierTypeFormatsExpectedCells [
 	| row |
 	row := CodeAnalysisRunner

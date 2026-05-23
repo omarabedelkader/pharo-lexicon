@@ -12,10 +12,9 @@ Class {
 
 { #category : 'running' }
 CodeAnalysisRunner class >> allClassesPerPackage [
-	| table |
-	table := self latexTableForAllClassesPerPackage.
-	self write: table to: self classesPerPackageTexFileName.
-	^ table
+	^ self
+		saveReportNamed: self classesPerPackageTexFileName
+		generatedBy: [ self latexTableForAllClassesPerPackage ]
 ]
 
 { #category : 'running' }
@@ -36,18 +35,16 @@ CodeAnalysisRunner class >> allLiteralsInSelectedPackages [
 
 { #category : 'running' }
 CodeAnalysisRunner class >> allLocPerNonDataMethod [
-	| table |
-	table := self latexTableForAllLocPerNonDataMethod.
-	self write: table to: self locPerNonDataMethodTexFileName.
-	^ table
+	^ self
+		saveReportNamed: self locPerNonDataMethodTexFileName
+		generatedBy: [ self latexTableForAllLocPerNonDataMethod ]
 ]
 
 { #category : 'running' }
 CodeAnalysisRunner class >> allMethodsPerClass [
-	| table |
-	table := self latexTableForAllMethodsPerClass.
-	self write: table to: self methodsPerClassTexFileName.
-	^ table
+	^ self
+		saveReportNamed: self methodsPerClassTexFileName
+		generatedBy: [ self latexTableForAllMethodsPerClass ]
 ]
 
 { #category : 'private' }
@@ -57,10 +54,9 @@ CodeAnalysisRunner class >> allSourceWordsInSelectedPackages [
 
 { #category : 'running' }
 CodeAnalysisRunner class >> allTokensPerMethod [
-	| table |
-	table := self latexTableForAllTokensPerMethod.
-	self write: table to: self tokensPerMethodTexFileName.
-	^ table
+	^ self
+		saveReportNamed: self tokensPerMethodTexFileName
+		generatedBy: [ self latexTableForAllTokensPerMethod ]
 ]
 
 { #category : 'private' }
@@ -150,10 +146,9 @@ CodeAnalysisRunner class >> classesPerPackageTexFileName [
 
 { #category : 'running' }
 CodeAnalysisRunner class >> counts [
-	| table |
-	table := self latexTableForCounts.
-	self write: table to: self countsTexFileName.
-	^ table
+	^ self
+		saveReportNamed: self countsTexFileName
+		generatedBy: [ self latexTableForCounts ]
 ]
 
 { #category : 'private' }
@@ -855,6 +850,11 @@ CodeAnalysisRunner class >> outputDirectory: aFileReference [
 ]
 
 { #category : 'private' }
+CodeAnalysisRunner class >> outputFileFor: aFileName [
+	^ self outputDirectory asFileReference / aFileName
+]
+
+{ #category : 'private' }
 CodeAnalysisRunner class >> packageNamed: aString [
 	^ Smalltalk image packages
 		detect: [ :each | each name = aString ]
@@ -902,10 +902,9 @@ CodeAnalysisRunner class >> pharoIdentifierNameEntries [
 
 { #category : 'running' }
 CodeAnalysisRunner class >> pharoIdentifierNamesDistribution [
-	| table |
-	table := self latexTableForPharoIdentifierNamesDistribution.
-	self write: table to: self pharoIdentifierNamesDistributionTexFileName.
-	^ table
+	^ self
+		saveReportNamed: self pharoIdentifierNamesDistributionTexFileName
+		generatedBy: [ self latexTableForPharoIdentifierNamesDistribution ]
 ]
 
 { #category : 'accessing' }
@@ -915,10 +914,9 @@ CodeAnalysisRunner class >> pharoIdentifierNamesDistributionTexFileName [
 
 { #category : 'running' }
 CodeAnalysisRunner class >> pharoLiteralDistribution [
-	| table |
-	table := self latexTableForPharoLiteralDistribution.
-	self write: table to: self pharoLiteralDistributionTexFileName.
-	^ table
+	^ self
+		saveReportNamed: self pharoLiteralDistributionTexFileName
+		generatedBy: [ self latexTableForPharoLiteralDistribution ]
 ]
 
 { #category : 'accessing' }
@@ -941,10 +939,9 @@ CodeAnalysisRunner class >> pharoLiteralEntries [
 
 { #category : 'running' }
 CodeAnalysisRunner class >> pharoTokenTypeDistribution [
-	| table |
-	table := self latexTableForPharoTokenTypeDistribution.
-	self write: table to: self pharoTokenTypeDistributionTexFileName.
-	^ table
+	^ self
+		saveReportNamed: self pharoTokenTypeDistributionTexFileName
+		generatedBy: [ self latexTableForPharoTokenTypeDistribution ]
 ]
 
 { #category : 'accessing' }
@@ -979,6 +976,16 @@ CodeAnalysisRunner class >> pharoTokenTypeEntries [
 { #category : 'running' }
 CodeAnalysisRunner class >> saveDefaultPackagesAnalysisToTex [
 	^ self allClassesPerPackage
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> saveReportNamed: aFileName generatedBy: aBlock [
+	| contents |
+	contents := [ aBlock value ]
+		on: Error
+		do: [ :ex | self textReportForError: ex ].
+	self write: contents to: aFileName.
+	^ contents
 ]
 
 { #category : 'private' }
@@ -1070,6 +1077,17 @@ CodeAnalysisRunner class >> temporaryVariableWordsInSelectedPackages [
 ]
 
 { #category : 'private' }
+CodeAnalysisRunner class >> textReportForError: anError [
+	^ String streamContents: [ :stream |
+		stream
+			nextPutAll: 'Error generating report';
+			cr;
+			nextPutAll: anError class name;
+			nextPutAll: ': ';
+			nextPutAll: anError description ]
+]
+
+{ #category : 'private' }
 CodeAnalysisRunner class >> tokenCharacterCountOfMethod: aCompiledMethod [
 	^ self characterCountOfWords: aCompiledMethod tokens
 ]
@@ -1115,10 +1133,9 @@ CodeAnalysisRunner class >> wordStatisticsFor: aCollectionOfWords [
 
 { #category : 'running' }
 CodeAnalysisRunner class >> wordcounts [
-	| table |
-	table := self latexTableForWordCounts.
-	self write: table to: self wordCountsTexFileName.
-	^ table
+	^ self
+		saveReportNamed: self wordCountsTexFileName
+		generatedBy: [ self latexTableForWordCounts ]
 ]
 
 { #category : 'private' }
@@ -1145,7 +1162,7 @@ CodeAnalysisRunner class >> write: aString to: aFileName [
 	| directory file |
 	directory := self outputDirectory asFileReference.
 	directory ensureCreateDirectory.
-	file := directory / aFileName.
+	file := self outputFileFor: aFileName.
 	file exists ifTrue: [ file delete ].
 	file writeStreamDo: [ :stream | stream nextPutAll: aString ]
 ]
