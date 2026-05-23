@@ -2,15 +2,22 @@ Extension { #name : 'CompiledMethod' }
 
 { #category : '*WWCodeAnalysis' }
 CompiledMethod >> codeAnalysisParseTree [
-	^ OCParser parseMethod: self sourceCode
+	^ [ OCParser parseMethod: self sourceCode ]
+		on: Error
+		do: [ nil ]
 ]
 
 { #category : '*WWCodeAnalysis' }
 CompiledMethod >> collectTokensUsing: aVisitorClass [
-	| visitor |
+	| visitor parseTree |
+	parseTree := self codeAnalysisParseTree.
+	parseTree ifNil: [ ^ #() ].
+
 	visitor := aVisitorClass new.
-	visitor visitNode: self codeAnalysisParseTree.
-	^ visitor tokens asArray
+	^ [
+		visitor visitNode: parseTree.
+		visitor tokens asArray
+	] on: Error do: [ #() ]
 ]
 
 { #category : '*WWCodeAnalysis' }

@@ -314,6 +314,18 @@ CodeAnalysisRunner class >> imagePackageNames [
 ]
 
 { #category : 'private' }
+CodeAnalysisRunner class >> imageWorkingDirectory [
+	(Smalltalk image respondsTo: #imageDirectory) ifTrue: [
+		^ Smalltalk image imageDirectory asFileReference ].
+	(Smalltalk globals includesKey: #FileLocator) ifTrue: [
+		| fileLocator |
+		fileLocator := Smalltalk globals at: #FileLocator.
+		(fileLocator respondsTo: #imageDirectory) ifTrue: [
+			^ fileLocator imageDirectory asFileReference ] ].
+	^ FileSystem disk workingDirectory
+]
+
+{ #category : 'private' }
 CodeAnalysisRunner class >> isDataMethod: aCompiledMethod [
 	| protocolName |
 	protocolName := aCompiledMethod protocol
@@ -834,7 +846,7 @@ CodeAnalysisRunner class >> nonDataMethodsInSelectedPackages [
 
 { #category : 'accessing' }
 CodeAnalysisRunner class >> outputDirectory [
-	^ outputDirectory ifNil: [ FileSystem disk workingDirectory ]
+	^ outputDirectory ifNil: [ self imageWorkingDirectory ]
 ]
 
 { #category : 'accessing' }
