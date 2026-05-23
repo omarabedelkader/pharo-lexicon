@@ -178,9 +178,8 @@ CodeAnalysisRunner class >> countsTexFileName [
 
 { #category : 'accessing' }
 CodeAnalysisRunner class >> defaultPackages [
-	"Define the package names to analyze here, for example:
-	#('Kernel' 'Collections-Sequenceable')"
-	^ #('Collections-Sequenceable')
+	"By default analyze every package loaded in the current image."
+	^ self imagePackageNames
 ]
 
 { #category : 'accessing' }
@@ -307,6 +306,11 @@ CodeAnalysisRunner class >> identifierWordsFromNames: aCollectionOfNames [
 { #category : 'private' }
 CodeAnalysisRunner class >> instanceVariableWordsInSelectedPackages [
 	^ self identifierWordsFromNames: (self classesInSelectedPackages flatCollect: [ :each | each instVarNames ])
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> imagePackageNames [
+	^ Smalltalk image packages collect: [ :each | each name ]
 ]
 
 { #category : 'private' }
@@ -577,7 +581,7 @@ CodeAnalysisRunner class >> latexTableForCounts [
 		stream nextPutAll: '\hline'; cr.
 		stream nextPutAll: '\bfseries Project & \bfseries Packages & \bfseries Classes & \bfseries Methods & \bfseries Lines of Code & \bfseries Tokens \\' ; cr.
 		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: (self latexRowForCountsLabel: 'Default packages' values: counts); cr.
+		stream nextPutAll: (self latexRowForCountsLabel: self selectedPackagesLabel values: counts); cr.
 		stream nextPutAll: '\hline'; cr.
 		stream nextPutAll: (self latexRowForCountsLabel: 'Total' values: counts); cr.
 		stream nextPutAll: '\hline'; cr.
@@ -963,6 +967,13 @@ CodeAnalysisRunner class >> pharoTokenTypeEntries [
 { #category : 'running' }
 CodeAnalysisRunner class >> saveDefaultPackagesAnalysisToTex [
 	^ self allClassesPerPackage
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> selectedPackagesLabel [
+	^ self packageNames
+		ifEmpty: [ 'All image packages' ]
+		ifNotEmpty: [ 'Selected packages' ]
 ]
 
 { #category : 'private' }

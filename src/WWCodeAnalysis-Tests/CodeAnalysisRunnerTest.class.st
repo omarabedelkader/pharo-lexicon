@@ -62,7 +62,7 @@ CodeAnalysisRunnerTest >> testLatexRowForAllMethodsFormatsExpectedCells [
 CodeAnalysisRunnerTest >> testLatexRowForCountsFormatsExpectedCells [
 	| row |
 	row := CodeAnalysisRunner
-		latexRowForCountsLabel: 'Default packages'
+		latexRowForCountsLabel: 'All image packages'
 		values: (Dictionary newFrom: {
 			#packages -> 12.
 			#classes -> 1234.
@@ -70,8 +70,22 @@ CodeAnalysisRunnerTest >> testLatexRowForCountsFormatsExpectedCells [
 			#linesOfCode -> 101112.
 			#tokens -> 131415 }).
 
-	self assert: (row includesSubstring: 'Default packages & 12 & 1,234 & 56,789 & 101,112 & 131,415').
+	self assert: (row includesSubstring: 'All image packages & 12 & 1,234 & 56,789 & 101,112 & 131,415').
 	self assert: (row endsWith: ' \\')
+]
+
+{ #category : 'tests' }
+CodeAnalysisRunnerTest >> testSelectedPackagesDefaultsToAllPackagesInImage [
+	| originalPackageNames selectedPackageNames imagePackageNames |
+	originalPackageNames := CodeAnalysisRunner packageNames.
+	[
+		CodeAnalysisRunner packageNames: #().
+		selectedPackageNames := (CodeAnalysisRunner selectedPackages collect: [ :each | each name ]) asSet.
+		imagePackageNames := (Smalltalk image packages collect: [ :each | each name ]) asSet.
+
+		self assert: selectedPackageNames equals: imagePackageNames
+	] ensure: [
+		CodeAnalysisRunner packageNames: originalPackageNames ]
 ]
 
 { #category : 'tests' }
