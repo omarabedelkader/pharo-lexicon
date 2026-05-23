@@ -89,6 +89,17 @@ CodeAnalysisRunnerTest >> testSelectedPackagesDefaultsToAllPackagesInImage [
 ]
 
 { #category : 'tests' }
+CodeAnalysisRunnerTest >> testOutputDirectorySetterCoercesToFileReference [
+	| originalOutputDirectory |
+	originalOutputDirectory := CodeAnalysisRunner outputDirectory.
+	[
+		CodeAnalysisRunner outputDirectory: '/tmp/pharo-lexicon-test-output'.
+		self assert: CodeAnalysisRunner outputDirectory class name equals: 'FileReference'
+	] ensure: [
+		CodeAnalysisRunner outputDirectory: originalOutputDirectory ]
+]
+
+{ #category : 'tests' }
 CodeAnalysisRunnerTest >> testLatexRowForIdentifierTypeFormatsExpectedCells [
 	| row |
 	row := CodeAnalysisRunner

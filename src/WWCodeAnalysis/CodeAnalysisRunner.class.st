@@ -839,7 +839,7 @@ CodeAnalysisRunner class >> outputDirectory [
 
 { #category : 'accessing' }
 CodeAnalysisRunner class >> outputDirectory: aFileReference [
-	outputDirectory := aFileReference
+	outputDirectory := aFileReference asFileReference
 ]
 
 { #category : 'private' }
@@ -1130,8 +1130,10 @@ CodeAnalysisRunner class >> wordsFromCorpusProviderNamedAnyOf: aCollectionOfName
 
 { #category : 'saving' }
 CodeAnalysisRunner class >> write: aString to: aFileName [
-	| file |
-	file := self outputDirectory / aFileName.
+	| directory file |
+	directory := self outputDirectory asFileReference.
+	directory ensureCreateDirectory.
+	file := directory / aFileName.
 	file exists ifTrue: [ file delete ].
 	file writeStreamDo: [ :stream | stream nextPutAll: aString ]
 ]
