@@ -137,6 +137,29 @@ CodeAnalysisRunnerTest >> testLatexRowForLiteralTypeFormatsExpectedCells [
 ]
 
 { #category : 'tests' }
+CodeAnalysisRunnerTest >> testLiteralEntriesOfMethodCollectsLiteralKindsRobustly [
+	| selector method entries |
+	selector := #codeAnalysisLiteralDistributionExample.
+
+	[
+		self class compile: 'codeAnalysisLiteralDistributionExample
+	^ #(1 ''two'' #three $c) -> { 4. ''five''. #six. $z. true. false. nil }'.
+
+		method := self class compiledMethodAt: selector.
+		entries := CodeAnalysisRunner literalEntriesOfMethod: method.
+
+		self assert: ((entries select: [ :each | each key = 'Numbers' ]) size) equals: 2.
+		self assert: ((entries select: [ :each | each key = 'Strings' ]) size) equals: 2.
+		self assert: ((entries select: [ :each | each key = 'Symbols' ]) size) equals: 2.
+		self assert: ((entries select: [ :each | each key = 'Characters' ]) size) equals: 2.
+		self assert: ((entries select: [ :each | each key = 'Literal arrays' ]) size) equals: 1.
+		self assert: ((entries anySatisfy: [ :each | #(nil true false) includes: each value ]) not)
+	] ensure: [
+		(self class includesSelector: selector)
+			ifTrue: [ self class removeSelector: selector ] ]
+]
+
+{ #category : 'tests' }
 CodeAnalysisRunnerTest >> testLatexRowForTypeTotalsFormatsExpectedCells [
 	| row |
 	row := CodeAnalysisRunner

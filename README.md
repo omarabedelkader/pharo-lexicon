@@ -47,3 +47,43 @@ CodeAnalysisRunner wordcounts.
 "writes word_counts.tex"
 
 ```
+
+
+```smalltalk
+
+
+Metacello new
+  githubUser: 'omarabedelkader' project: 'pharo-lexicon' commitish: 'main' path: 'src';
+  baseline: 'PharoLexicon';
+  load.
+
+Metacello new
+ baseline:'Seaside3';
+ repository: 'github://SeasideSt/Seaside:master/repository';
+ load.
+
+Metacello new
+  githubUser: 'pharo-llm' project: 'pharo-copilot' commitish: 'main' path: 'src';
+  baseline: 'AIPharoCopilot';
+  load.
+
+Metacello new
+  githubUser: 'pharo-llm' project: 'pharo-mcp' commitish: 'main' path: 'src';
+  baseline: 'LLMPharoMCP';
+  load.
+
+
+Metacello new
+  githubUser: 'pharo-llm' project: 'chatpharo' commitish: 'main' path: 'src';
+  baseline: 'AIChatPharo';
+  load.
+
+
+Metacello new
+  githubUser: 'pharo-llm' project: 'pharo-acp' commitish: 'main' path: 'src';
+  baseline: 'LLMPharoACP';
+  load.
+
+
+
+```

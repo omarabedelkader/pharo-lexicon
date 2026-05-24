@@ -344,7 +344,15 @@ CodeAnalysisRunner class >> isGlobalVariableNode: aNode [
 
 { #category : 'private' }
 CodeAnalysisRunner class >> isLiteralArrayNode: aNode [
+	((aNode respondsTo: #isLiteralArray) and: [ aNode isLiteralArray ]) ifTrue: [ ^ true ].
 	^ aNode class name = 'RBLiteralArrayNode'
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> isLiteralNode: aNode [
+	((aNode respondsTo: #isLiteralNode) and: [ aNode isLiteralNode ]) ifTrue: [ ^ true ].
+	((aNode respondsTo: #isLiteral) and: [ aNode isLiteral ]) ifTrue: [ ^ true ].
+	^ #('RBLiteralValueNode' 'RBLiteralNode') includes: aNode class name
 ]
 
 { #category : 'private' }
@@ -382,7 +390,7 @@ CodeAnalysisRunner class >> keywordTokensOfMethod: aCompiledMethod [
 		(node class name = 'RBSelfNode') ifTrue: [ words add: 'self' ].
 		(node class name = 'RBSuperNode') ifTrue: [ words add: 'super' ].
 		(node class name = 'RBThisContextNode') ifTrue: [ words add: 'thisContext' ].
-		((node class name = 'RBLiteralValueNode' or: [ node class name = 'RBLiteralNode' ])
+		((self isLiteralNode: node)
 			and: [ #(nil true false) includes: node value ]) ifTrue: [
 				words add: node value printString ] ].
 	^ words asArray
@@ -633,7 +641,7 @@ CodeAnalysisRunner class >> latexTableForPharoLiteralDistribution [
 	| entries totalLiterals totalCharacters |
 	entries := self pharoLiteralEntries.
 	totalLiterals := self allLiteralsInSelectedPackages size.
-	totalCharacters := self sum: (self methodsInSelectedPackages collect: [ :each | self tokenCharacterCountOfMethod: each ]).
+	totalCharacters := self characterCountsOfLiterals: self allLiteralsInSelectedPackages.
 
 	^ String streamContents: [ :stream |
 		stream nextPutAll: '\begin{tabular}{lrrrr}'; cr.
@@ -770,7 +778,7 @@ CodeAnalysisRunner class >> literalEntriesOfMethod: aCompiledMethod [
 	parseTree nodesDo: [ :node |
 		(self isLiteralArrayNode: node) ifTrue: [
 			literals add: ('Literal arrays' -> node value) ].
-		(node class name = 'RBLiteralValueNode' or: [ node class name = 'RBLiteralNode' ]) ifTrue: [
+		(self isLiteralNode: node) ifTrue: [
 			(self literalTypeFor: node value)
 				ifNotNil: [ :type | literals add: (type -> node value) ] ] ].
 	^ literals asArray
