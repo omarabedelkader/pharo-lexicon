@@ -1205,10 +1205,10 @@ CodeAnalysisRunner class >> testTableCountsForSelectedPackages [
 	^ Dictionary newFrom: {
 		#packageTotal -> packages size.
 		#packageTest -> testPackages size.
-		#packageNonTest -> packages size - testPackages size.
+		#packageNonTest -> (packages size - testPackages size).
 		#classTotal -> classes size.
 		#classTest -> testClasses size.
-		#classNonTest -> classes size - testClasses size.
+		#classNonTest -> (classes size - testClasses size).
 		#methodTotal -> methods size.
 		#methodTest -> testMethods size.
 		#methodNonTest -> nonTestMethods size.
