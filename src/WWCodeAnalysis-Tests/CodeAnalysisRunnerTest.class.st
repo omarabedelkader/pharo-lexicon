@@ -42,6 +42,7 @@ CodeAnalysisRunnerTest >> testTexFileName [
 	self assert: CodeAnalysisRunner pharoIdentifierNamesDistributionTexFileName equals: 'pharo_identifier_names_distribution.tex'.
 	self assert: CodeAnalysisRunner pharoLiteralDistributionTexFileName equals: 'pharo_literal_distribution.tex'.
 	self assert: CodeAnalysisRunner pharoTokenTypeDistributionTexFileName equals: 'pharo_token_type_distribution.tex'.
+	self assert: CodeAnalysisRunner testTableTexFileName equals: 'test_table.tex'.
 	self assert: CodeAnalysisRunner wordCountsTexFileName equals: 'word_counts.tex'.
 	self assert: CodeAnalysisRunner tokensPerMethodTexFileName equals: 'all_tokens_per_method.tex'
 ]
@@ -233,5 +234,31 @@ CodeAnalysisRunnerTest >> testLatexRowForWordCountFormatsExpectedCells [
 		selector: #words.
 
 	self assert: (row includesSubstring: '\bfseries Words & 10 & 10 & 10 & 10').
+	self assert: (row endsWith: ' \\')
+]
+
+{ #category : 'tests' }
+CodeAnalysisRunnerTest >> testAllWordsInCorpusFlattensNestedValues [
+	| words |
+	words := CodeAnalysisRunner allWordsInCorpus: {
+		'Alpha'.
+		#Beta.
+		{ 'Gamma'. #Delta }.
+		123.
+		$c }.
+
+	self assert: words equals: #('alpha' 'beta' 'gamma' 'delta')
+]
+
+{ #category : 'tests' }
+CodeAnalysisRunnerTest >> testLatexRowForTestTableFormatsExpectedCells [
+	| row |
+	row := CodeAnalysisRunner
+		latexRowForTestTableLabel: 'Methods'
+		total: 164914
+		test: 31191
+		nonTest: 133723.
+
+	self assert: (row includesSubstring: 'Methods & 164,914 & 31,191 & 133,723 & 18.9%').
 	self assert: (row endsWith: ' \\')
 ]

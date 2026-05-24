@@ -73,7 +73,7 @@ CodeAnalysisRunner class >> boxplotditributionplot [
 
 { #category : 'private' }
 CodeAnalysisRunner class >> allWordsInCorpus: aCollection [
-	^ aCollection collect: [ :each | each asLowercase ]
+	^ aCollection flatCollect: [ :each | self wordsFromCorpusValue: each ]
 ]
 
 { #category : 'running' }
@@ -273,6 +273,11 @@ CodeAnalysisRunner class >> formatPercentage: aNumerator over: aDenominator [
 CodeAnalysisRunner class >> formatStatistic: aKey value: aValue [
 	aKey = #mean ifTrue: [ ^ self formatMean: aValue ].
 	^ aValue asInteger printString
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> formatTablePercentage: aNumerator over: aDenominator [
+	^ (self formatPercentage: aNumerator over: aDenominator), '%'
 ]
 
 { #category : 'private' }
@@ -541,6 +546,22 @@ CodeAnalysisRunner class >> latexRowForWordCountLabel: aLabel pharo: pharoCounts
 			nextPutAll: ' \\' ]
 ]
 
+{ #category : 'private' }
+CodeAnalysisRunner class >> latexRowForTestTableLabel: aLabel total: totalCount test: testCount nonTest: nonTestCount [
+	^ String streamContents: [ :stream |
+		stream
+			nextPutAll: aLabel;
+			nextPutAll: ' & ';
+			nextPutAll: (self formatTableCount: totalCount);
+			nextPutAll: ' & ';
+			nextPutAll: (self formatTableCount: testCount);
+			nextPutAll: ' & ';
+			nextPutAll: (self formatTableCount: nonTestCount);
+			nextPutAll: ' & ';
+			nextPutAll: (self formatTablePercentage: testCount over: totalCount);
+			nextPutAll: ' \\' ]
+]
+
 { #category : 'running' }
 CodeAnalysisRunner class >> latexTableForAllClassesPerPackage [
 	| packages testPackages nonTestPackages |
@@ -758,6 +779,26 @@ CodeAnalysisRunner class >> latexTableForWordCounts [
 		stream nextPutAll: (self latexRowForWordCountLabel: 'English words' pharo: pharoCounts pharoStar: pharoStarCounts brown: brownCounts gutenberg: gutenbergCounts selector: #englishWords); cr.
 		stream nextPutAll: (self latexRowForWordCountLabel: 'Unique English words' pharo: pharoCounts pharoStar: pharoStarCounts brown: brownCounts gutenberg: gutenbergCounts selector: #uniqueEnglishWords); cr.
 		stream nextPutAll: (self latexRowForWordCountLabel: 'Unique English stems' pharo: pharoCounts pharoStar: pharoStarCounts brown: brownCounts gutenberg: gutenbergCounts selector: #uniqueEnglishStems); cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\end{tabular}'
+	]
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> latexTableForTestTable [
+	| counts |
+	counts := self testTableCountsForSelectedPackages.
+
+	^ String streamContents: [ :stream |
+		stream nextPutAll: '\begin{tabular}{lrrrr}'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: 'Entity & \bfseries Total & \bfseries Test & \bfseries Non-test & \bfseries Test \%' ; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: (self latexRowForTestTableLabel: 'Packages' total: (counts at: #packageTotal) test: (counts at: #packageTest) nonTest: (counts at: #packageNonTest)); cr.
+		stream nextPutAll: (self latexRowForTestTableLabel: 'Classes' total: (counts at: #classTotal) test: (counts at: #classTest) nonTest: (counts at: #classNonTest)); cr.
+		stream nextPutAll: (self latexRowForTestTableLabel: 'Methods' total: (counts at: #methodTotal) test: (counts at: #methodTest) nonTest: (counts at: #methodNonTest)); cr.
+		stream nextPutAll: (self latexRowForTestTableLabel: 'LOC' total: (counts at: #locTotal) test: (counts at: #locTest) nonTest: (counts at: #locNonTest)); cr.
+		stream nextPutAll: (self latexRowForTestTableLabel: 'Tokens' total: (counts at: #tokenTotal) test: (counts at: #tokenTest) nonTest: (counts at: #tokenNonTest)); cr.
 		stream nextPutAll: '\hline'; cr.
 		stream nextPutAll: '\end{tabular}'
 	]
@@ -1143,6 +1184,47 @@ CodeAnalysisRunner class >> statisticsForCounts: counts [
 		#max -> sorted last }
 ]
 
+{ #category : 'running' }
+CodeAnalysisRunner class >> testtable [
+	^ self
+		saveReportNamed: self testTableTexFileName
+		generatedBy: [ self latexTableForTestTable ]
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> testTableCountsForSelectedPackages [
+	| packages classes methods testPackages testClasses testMethods nonTestMethods |
+	packages := self selectedPackages.
+	classes := self classesInSelectedPackages.
+	methods := self methodsInSelectedPackages.
+	testPackages := packages select: [ :each | self isTestPackage: each ].
+	testClasses := classes select: [ :each | self isTestClass: each ].
+	testMethods := methods select: [ :each | self isTestMethod: each ].
+	nonTestMethods := methods reject: [ :each | self isTestMethod: each ].
+
+	^ Dictionary newFrom: {
+		#packageTotal -> packages size.
+		#packageTest -> testPackages size.
+		#packageNonTest -> packages size - testPackages size.
+		#classTotal -> classes size.
+		#classTest -> testClasses size.
+		#classNonTest -> classes size - testClasses size.
+		#methodTotal -> methods size.
+		#methodTest -> testMethods size.
+		#methodNonTest -> nonTestMethods size.
+		#locTotal -> (self sum: (self linesOfCodeForMethods: methods)).
+		#locTest -> (self sum: (self linesOfCodeForMethods: testMethods)).
+		#locNonTest -> (self sum: (self linesOfCodeForMethods: nonTestMethods)).
+		#tokenTotal -> (self sum: (self tokenCountsForMethods: methods)).
+		#tokenTest -> (self sum: (self tokenCountsForMethods: testMethods)).
+		#tokenNonTest -> (self sum: (self tokenCountsForMethods: nonTestMethods)) }
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> testTableTexFileName [
+	^ 'test_table.tex'
+]
+
 { #category : 'private' }
 CodeAnalysisRunner class >> stemFor: aString [
 	| porter stemmer |
@@ -1237,12 +1319,18 @@ CodeAnalysisRunner class >> wordcounts [
 
 { #category : 'private' }
 CodeAnalysisRunner class >> wordsFromCorpusProvider: anObject [
+	| selectors |
+	anObject ifNil: [ ^ #() ].
 	(anObject respondsTo: #words) ifTrue: [ ^ anObject words ].
 	(anObject respondsTo: #allWords) ifTrue: [ ^ anObject allWords ].
 	(anObject respondsTo: #tokens) ifTrue: [ ^ anObject tokens ].
 	(anObject respondsTo: #corpus) ifTrue: [ ^ self wordsFromCorpusProvider: anObject corpus ].
 	(anObject respondsTo: #new) ifTrue: [ ^ self wordsFromCorpusProvider: anObject new ].
-	^ nil
+	selectors := #(documents sentences paragraphs entries items contents data texts strings values).
+	selectors
+		detect: [ :each | anObject respondsTo: each ]
+		ifFound: [ :each | ^ anObject perform: each ]
+		ifNone: [ ^ anObject ]
 ]
 
 { #category : 'private' }
@@ -1251,7 +1339,21 @@ CodeAnalysisRunner class >> wordsFromCorpusProviderNamedAnyOf: aCollectionOfName
 	provider := self globalNamedAnyOf: aCollectionOfNames.
 	provider ifNil: [ ^ #() ].
 	words := self wordsFromCorpusProvider: provider.
-	^ words ifNil: [ #() ] ifNotNil: [ words ]
+	^ self allWordsInCorpus: (words ifNil: [ #() ] ifNotNil: [ words ])
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> wordsFromCorpusValue: anObject [
+	| providerValue |
+	anObject ifNil: [ ^ #() ].
+	((anObject isString) or: [ anObject isSymbol ]) ifTrue: [
+		^ { anObject asString asLowercase } ].
+	(anObject isCharacter or: [ anObject isNumber ]) ifTrue: [ ^ #() ].
+	(anObject isCollection and: [ anObject isString not ]) ifTrue: [
+		^ anObject flatCollect: [ :each | self wordsFromCorpusValue: each ] ].
+	providerValue := self wordsFromCorpusProvider: anObject.
+	providerValue == anObject ifTrue: [ ^ #() ].
+	^ self wordsFromCorpusValue: providerValue
 ]
 
 { #category : 'saving' }
