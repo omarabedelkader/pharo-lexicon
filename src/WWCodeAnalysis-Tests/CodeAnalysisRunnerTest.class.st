@@ -262,3 +262,19 @@ CodeAnalysisRunnerTest >> testLatexRowForTestTableFormatsExpectedCells [
 	self assert: (row includesSubstring: 'Methods & 164,914 & 31,191 & 133,723 & 18.9%').
 	self assert: (row endsWith: ' \\')
 ]
+
+{ #category : 'tests' }
+CodeAnalysisRunnerTest >> testWordsFromCorpusValueExtractsTaggedAssociationKey [
+	| words |
+	words := CodeAnalysisRunner wordsFromCorpusValue: ('dog' -> 'NN').
+
+	self assert: words equals: #('dog')
+]
+
+{ #category : 'tests' }
+CodeAnalysisRunnerTest >> testWordsFromCorpusValueSplitsPlainTextIntoWords [
+	| words |
+	words := CodeAnalysisRunner wordsFromCorpusValue: 'Hello, Gutenberg world!'.
+
+	self assert: words equals: #('hello' 'gutenberg' 'world')
+]

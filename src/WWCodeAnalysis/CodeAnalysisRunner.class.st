@@ -302,6 +302,19 @@ CodeAnalysisRunner class >> globalNamedAnyOf: aCollectionOfNames [
 ]
 
 { #category : 'private' }
+CodeAnalysisRunner class >> globalNamedContainingAnyOf: aCollectionOfNames [
+	| loweredNames |
+	loweredNames := aCollectionOfNames collect: [ :each | each asLowercase ].
+	^ Smalltalk globals associations
+		detect: [ :each |
+			| key |
+			key := each key asString asLowercase.
+			loweredNames anySatisfy: [ :name | key includesSubstring: name ] ]
+		ifFound: [ :each | each value ]
+		ifNone: [ nil ]
+]
+
+{ #category : 'private' }
 CodeAnalysisRunner class >> globalVariableWordsInSelectedPackages [
 	^ self methodsInSelectedPackages flatCollect: [ :each |
 		self globalVariableWordsOfMethod: each ]
@@ -324,6 +337,16 @@ CodeAnalysisRunner class >> globalVariableWordsOfMethod: aCompiledMethod [
 { #category : 'private' }
 CodeAnalysisRunner class >> gutenbergCorpusWords [
 	^ self wordsFromCorpusProviderNamedAnyOf: #('GutenbergCorpus' 'Gutenberg' 'CorpusGutenberg')
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> isLikelyCorpusTag: anObject [
+	| string |
+	(anObject isString or: [ anObject isSymbol ]) ifFalse: [ ^ false ].
+	string := anObject asString.
+	string isEmpty ifTrue: [ ^ false ].
+	string size > 5 ifTrue: [ ^ false ].
+	^ string = string asUppercase
 ]
 
 { #category : 'private' }
@@ -1337,6 +1360,8 @@ CodeAnalysisRunner class >> wordsFromCorpusProvider: anObject [
 CodeAnalysisRunner class >> wordsFromCorpusProviderNamedAnyOf: aCollectionOfNames [
 	| provider words |
 	provider := self globalNamedAnyOf: aCollectionOfNames.
+	provider ifNil: [
+		provider := self globalNamedContainingAnyOf: aCollectionOfNames ].
 	provider ifNil: [ ^ #() ].
 	words := self wordsFromCorpusProvider: provider.
 	^ self allWordsInCorpus: (words ifNil: [ #() ] ifNotNil: [ words ])
@@ -1346,14 +1371,35 @@ CodeAnalysisRunner class >> wordsFromCorpusProviderNamedAnyOf: aCollectionOfName
 CodeAnalysisRunner class >> wordsFromCorpusValue: anObject [
 	| providerValue |
 	anObject ifNil: [ ^ #() ].
+	(anObject isKindOf: Association) ifTrue: [
+		(self isLikelyCorpusTag: anObject value)
+			ifTrue: [ ^ self wordsFromCorpusValue: anObject key ].
+		^ (self wordsFromCorpusValue: anObject key), (self wordsFromCorpusValue: anObject value) ].
 	((anObject isString) or: [ anObject isSymbol ]) ifTrue: [
-		^ { anObject asString asLowercase } ].
+		^ self wordsFromString: anObject asString ].
 	(anObject isCharacter or: [ anObject isNumber ]) ifTrue: [ ^ #() ].
+	((anObject respondsTo: #first)
+		and: [ anObject respondsTo: #second ]
+		and: [ anObject respondsTo: #size ]
+		and: [ anObject size = 2 ]
+		and: [ self isLikelyCorpusTag: anObject second ] ]) ifTrue: [
+		^ self wordsFromCorpusValue: anObject first ].
 	(anObject isCollection and: [ anObject isString not ]) ifTrue: [
 		^ anObject flatCollect: [ :each | self wordsFromCorpusValue: each ] ].
 	providerValue := self wordsFromCorpusProvider: anObject.
 	providerValue == anObject ifTrue: [ ^ #() ].
 	^ self wordsFromCorpusValue: providerValue
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> wordsFromString: aString [
+	| sanitized |
+	sanitized := String streamContents: [ :stream |
+		aString do: [ :character |
+			(character isLetter or: [ character = $' ])
+				ifTrue: [ stream nextPut: character asLowercase ]
+				ifFalse: [ stream nextPut: Character space ] ] ].
+	^ (sanitized substrings: ' ') reject: [ :each | each isEmpty ]
 ]
 
 { #category : 'saving' }
