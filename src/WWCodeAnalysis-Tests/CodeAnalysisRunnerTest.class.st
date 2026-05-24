@@ -35,6 +35,7 @@ CodeAnalysisRunnerTest >> testStatisticsForCounts [
 { #category : 'tests' }
 CodeAnalysisRunnerTest >> testTexFileName [
 	self assert: CodeAnalysisRunner countsTexFileName equals: 'counts.tex'.
+	self assert: CodeAnalysisRunner boxplotDistributionPlotCsvFileName equals: 'size_distribution_plot.csv'.
 	self assert: CodeAnalysisRunner classesPerPackageTexFileName equals: 'all_classes_per_package.tex'.
 	self assert: CodeAnalysisRunner locPerNonDataMethodTexFileName equals: 'all_loc_per_non_data_method.tex'.
 	self assert: CodeAnalysisRunner methodsPerClassTexFileName equals: 'all_methods_per_class.tex'.
@@ -72,6 +73,45 @@ CodeAnalysisRunnerTest >> testLatexRowForCountsFormatsExpectedCells [
 
 	self assert: (row includesSubstring: 'All image packages & 12 & 1,234 & 56,789 & 101,112 & 131,415').
 	self assert: (row endsWith: ' \\')
+]
+
+{ #category : 'tests' }
+CodeAnalysisRunnerTest >> testSizeDistributionPlotCsvFromRowsFormatsExpectedColumns [
+	| csv |
+	csv := CodeAnalysisRunner sizeDistributionPlotCsvFromRows: {
+		Dictionary newFrom: {
+			'level' -> 'package'.
+			'metric' -> 'classes_per_package'.
+			'size' -> 12 }.
+		Dictionary newFrom: {
+			'level' -> 'method'.
+			'metric' -> 'tokens_per_method'.
+			'size' -> 34 } }.
+
+	self assert: (csv includesSubstring: '"level","metric","size"').
+	self assert: (csv includesSubstring: '"package","classes_per_package","12"').
+	self assert: (csv includesSubstring: '"method","tokens_per_method","34"')
+]
+
+{ #category : 'tests' }
+CodeAnalysisRunnerTest >> testSizeDistributionPlotRowsForPackagesClassesMethodsIncludesAllLevels [
+	| package class method rows |
+	package := Smalltalk image packages
+		detect: [ :each | (CodeAnalysisRunner classesOfPackage: each) isNotEmpty ]
+		ifNone: [ self fail ].
+	class := (CodeAnalysisRunner classesOfPackage: package) detect: [ :each | each methods isNotEmpty ] ifNone: [ self fail ].
+	method := class methods anyOne.
+
+	rows := CodeAnalysisRunner
+		sizeDistributionPlotRowsForPackages: { package }
+		classes: { class }
+		methods: { method }.
+
+	self assert: ((rows select: [ :each | (each at: 'level') = 'package' ]) size) equals: 1.
+	self assert: ((rows select: [ :each | (each at: 'level') = 'class' ]) size) equals: 1.
+	self assert: ((rows select: [ :each | (each at: 'level') = 'method' ]) size) equals: 1.
+	self assert: ((rows collect: [ :each | each at: 'metric' ]) asSet)
+		equals: #('classes_per_package' 'methods_per_class' 'tokens_per_method') asSet
 ]
 
 { #category : 'tests' }

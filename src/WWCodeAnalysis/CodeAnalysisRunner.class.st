@@ -59,6 +59,18 @@ CodeAnalysisRunner class >> allTokensPerMethod [
 		generatedBy: [ self latexTableForAllTokensPerMethod ]
 ]
 
+{ #category : 'running' }
+CodeAnalysisRunner class >> boxplotdistributionplot [
+	^ self
+		saveReportNamed: self boxplotDistributionPlotCsvFileName
+		generatedBy: [ self sizeDistributionPlotCsv ]
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> boxplotditributionplot [
+	^ self boxplotdistributionplot
+]
+
 { #category : 'private' }
 CodeAnalysisRunner class >> allWordsInCorpus: aCollection [
 	^ aCollection collect: [ :each | each asLowercase ]
@@ -140,6 +152,11 @@ CodeAnalysisRunner class >> classesOfPackage: aPackage [
 ]
 
 { #category : 'accessing' }
+CodeAnalysisRunner class >> boxplotDistributionPlotCsvFileName [
+	^ 'size_distribution_plot.csv'
+]
+
+{ #category : 'accessing' }
 CodeAnalysisRunner class >> classesPerPackageTexFileName [
 	^ 'all_classes_per_package.tex'
 ]
@@ -164,6 +181,24 @@ CodeAnalysisRunner class >> countsForSelectedPackages [
 		#methods -> methods size.
 		#linesOfCode -> (self sum: (self linesOfCodeForMethods: methods)).
 		#tokens -> (self sum: (self tokenCountsForMethods: methods)) }
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> csvEscape: anObject [
+	| string escaped |
+	string := anObject
+		ifNil: [ '' ]
+		ifNotNil: [ anObject asString ].
+	escaped := string copyReplaceAll: '"' with: '""'.
+	^ '"', escaped, '"'
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> csvLineFrom: aCollection [
+	^ String streamContents: [ :stream |
+		aCollection doWithIndex: [ :each :index |
+			index > 1 ifTrue: [ stream nextPut: $, ].
+			stream nextPutAll: (self csvEscape: each) ] ]
 ]
 
 { #category : 'accessing' }
@@ -726,6 +761,60 @@ CodeAnalysisRunner class >> latexTableForWordCounts [
 		stream nextPutAll: '\hline'; cr.
 		stream nextPutAll: '\end{tabular}'
 	]
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> sizeDistributionPlotCsv [
+	^ self sizeDistributionPlotCsvFromRows: self sizeDistributionPlotRows
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> sizeDistributionPlotCsvFromRows: rows [
+	^ String streamContents: [ :stream |
+		stream
+			nextPutAll: (self csvLineFrom: #('level' 'metric' 'size'));
+			cr.
+		rows do: [ :row |
+			stream
+				nextPutAll: (self csvLineFrom: {
+					row at: 'level'.
+					row at: 'metric'.
+					row at: 'size' });
+				cr ] ]
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> sizeDistributionPlotRows [
+	^ self
+		sizeDistributionPlotRowsForPackages: self selectedPackages
+		classes: self classesInSelectedPackages
+		methods: self methodsInSelectedPackages
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> sizeDistributionPlotRowsForPackages: packages classes: classes methods: methods [
+	| rows |
+	rows := OrderedCollection new.
+
+	(self classCountsFor: packages) do: [ :each |
+		rows add: (Dictionary newFrom: {
+			'level' -> 'package'.
+			'metric' -> 'classes_per_package'.
+			'size' -> each }) ].
+
+	(self methodCountsForClasses: classes) do: [ :each |
+		rows add: (Dictionary newFrom: {
+			'level' -> 'class'.
+			'metric' -> 'methods_per_class'.
+			'size' -> each }) ].
+
+	(self tokenCountsForMethods: methods) do: [ :each |
+		rows add: (Dictionary newFrom: {
+			'level' -> 'method'.
+			'metric' -> 'tokens_per_method'.
+			'size' -> each }) ].
+
+	^ rows asArray
 ]
 
 { #category : 'private' }

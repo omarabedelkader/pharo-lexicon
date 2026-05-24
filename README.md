@@ -43,9 +43,21 @@ CodeAnalysisRunner pharoLiteralDistribution.
 CodeAnalysisRunner pharoTokenTypeDistribution.
 "writes pharo_token_type_distribution.tex"
 
+CodeAnalysisRunner boxplotdistributionplot.
+"writes size_distribution_plot.csv"
+
+CodeAnalysisRunner boxplotditributionplot.
+"same as boxplotdistributionplot"
+
 CodeAnalysisRunner wordcounts.
 "writes word_counts.tex"
 
+```
+
+Then render the actual figure with:
+
+```bash
+python3 scripts/plot_size_distribution.py size_distribution_plot.csv -o size_distribution_plot.png
 ```
 
 
