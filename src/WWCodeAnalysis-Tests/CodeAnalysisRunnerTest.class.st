@@ -75,9 +75,10 @@ CodeAnalysisRunnerTest >> testLatexFamilyVisualizationRanksAndAggregatesFamilies
 		latexFamilyVisualizationForCounts: counts
 		totalPackages: 275.
 
-	self assert: (latex includesSubstring: '\bfseries Rank & \bfseries Family').
-	self assert: (latex includesSubstring: '1 & Family\_1 & \rule{12.0em}{1.4ex} & 23').
-	self assert: (latex includesSubstring: 'Other (2 families) & \emph{long tail} & 5').
+	self assert: (latex includesSubstring: '\bfseries Count & \bfseries Rank').
+	self assert: (latex includesSubstring: '1 & Family\_1 & \rule{5.0em}{1.4ex} & 23').
+	self assert: (latex includesSubstring: '11 & Family\_11').
+	self assert: (latex includesSubstring: '\multicolumn{7}{r}{Other (2 families), \emph{long tail}} & 5').
 	self assert: (latex includesSubstring: '\bfseries 275').
 	self deny: (latex includesSubstring: 'Family\_21 &').
 	self deny: (latex includesSubstring: 'Family\_22 &')

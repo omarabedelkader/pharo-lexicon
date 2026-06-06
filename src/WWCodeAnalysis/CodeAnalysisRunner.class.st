@@ -742,13 +742,16 @@ CodeAnalysisRunner class >> latexTableForFamilies [
 
 { #category : 'private' }
 CodeAnalysisRunner class >> latexFamilyVisualizationForCounts: counts totalPackages: totalPackages [
-	| entries shownEntries remainingEntries maximumCount otherCount |
+	| entries shownEntries remainingEntries maximumCount otherCount splitIndex leftEntries rightEntries |
 	entries := counts associations asSortedCollection: [ :left :right |
 		left value = right value
 			ifTrue: [ left key < right key ]
 			ifFalse: [ left value > right value ] ].
 	shownEntries := entries first: (20 min: entries size).
 	remainingEntries := entries allButFirst: shownEntries size.
+	splitIndex := (shownEntries size + 1) // 2.
+	leftEntries := shownEntries first: splitIndex.
+	rightEntries := shownEntries allButFirst: splitIndex.
 	maximumCount := shownEntries
 		ifEmpty: [ 1 ]
 		ifNotEmpty: [ shownEntries first value ].
@@ -757,39 +760,56 @@ CodeAnalysisRunner class >> latexFamilyVisualizationForCounts: counts totalPacka
 		into: [ :total :each | total + each value ].
 
 	^ String streamContents: [ :stream |
-		stream nextPutAll: '\begin{tabular}{@{}rllr@{}}'; cr.
+		stream nextPutAll: '\begin{tabular}{@{}rllr@{\qquad}rllr@{}}'; cr.
 		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: '\bfseries Rank & \bfseries Family & \bfseries Packages & \bfseries Count \\' ; cr.
+		stream nextPutAll: '\bfseries Rank & \bfseries Family & \bfseries Packages & \bfseries Count & ';
+			nextPutAll: '\bfseries Rank & \bfseries Family & \bfseries Packages & \bfseries Count \\' ; cr.
 		stream nextPutAll: '\hline'; cr.
-		shownEntries doWithIndex: [ :entry :index |
-			stream
-				nextPutAll: index printString;
-				nextPutAll: ' & ';
-				nextPutAll: (self latexEscape: entry key);
-				nextPutAll: ' & ';
-				nextPutAll: '\rule{';
-				nextPutAll: (self formatMean: (entry value * 12.0 / maximumCount));
-				nextPutAll: 'em}{1.4ex} & ';
-				nextPutAll: (self formatTableCount: entry value);
-				nextPutAll: ' \\';
-				cr ].
+		leftEntries doWithIndex: [ :leftEntry :index |
+			self
+				writeLatexFamilyEntry: leftEntry
+				rank: index
+				maximumCount: maximumCount
+				on: stream.
+			stream nextPutAll: ' & '.
+			index <= rightEntries size
+				ifTrue: [
+					self
+						writeLatexFamilyEntry: (rightEntries at: index)
+						rank: splitIndex + index
+						maximumCount: maximumCount
+						on: stream ]
+				ifFalse: [ stream nextPutAll: ' & & &' ].
+			stream nextPutAll: ' \\'; cr ].
 		remainingEntries ifNotEmpty: [
 			stream
-				nextPutAll: ' & Other (';
+				nextPutAll: '\multicolumn{7}{r}{Other (';
 				nextPutAll: remainingEntries size printString;
-				nextPutAll: ' families) & \emph{long tail} & ';
+				nextPutAll: ' families), \emph{long tail}} & ';
 				nextPutAll: (self formatTableCount: otherCount);
 				nextPutAll: ' \\';
 				cr ].
 		stream nextPutAll: '\hline'; cr.
 		stream
-			nextPutAll: ' & \bfseries Total & & \bfseries ';
+			nextPutAll: '\multicolumn{7}{r}{\bfseries Total} & \bfseries ';
 			nextPutAll: (self formatTableCount: totalPackages);
 			nextPutAll: ' \\';
 			cr.
 		stream nextPutAll: '\hline'; cr.
 		stream nextPutAll: '\end{tabular}'
 	]
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> writeLatexFamilyEntry: entry rank: rank maximumCount: maximumCount on: stream [
+	stream
+		nextPutAll: rank printString;
+		nextPutAll: ' & ';
+		nextPutAll: (self latexEscape: entry key);
+		nextPutAll: ' & \rule{';
+		nextPutAll: (self formatMean: (entry value * 5.0 / maximumCount));
+		nextPutAll: 'em}{1.4ex} & ';
+		nextPutAll: (self formatTableCount: entry value)
 ]
 
 { #category : 'running' }

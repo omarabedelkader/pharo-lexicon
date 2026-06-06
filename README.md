@@ -35,7 +35,7 @@ CodeAnalysisRunner counts.
 "writes counts.tex"
 
 CodeAnalysisRunner families.
-"writes families.tex as a ranked bar summary of the 20 largest families;
+"writes families.tex as a two-column ranked bar summary of the 20 largest families;
 all BaselineOf packages form one Baseline family and the long tail is aggregated"
 
 CodeAnalysisRunner pharoIdentifierNamesDistribution.
