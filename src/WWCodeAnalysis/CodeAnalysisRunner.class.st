@@ -755,6 +755,10 @@ CodeAnalysisRunner class >> latexFamilyVisualizationForCounts: counts totalPacka
 		ifNotEmpty: [ entries first value ].
 
 	^ String streamContents: [ :stream |
+		stream nextPutAll: '\begingroup'; cr.
+		stream nextPutAll: '\scriptsize'; cr.
+		stream nextPutAll: '\setlength{\tabcolsep}{2pt}'; cr.
+		stream nextPutAll: '\renewcommand{\arraystretch}{0.85}'; cr.
 		stream nextPutAll: '\begin{tabular}{@{}rllr@{\qquad}rllr@{}}'; cr.
 		stream nextPutAll: '\hline'; cr.
 		stream nextPutAll: '\bfseries Rank & \bfseries Family & \bfseries Packages & \bfseries Count & ';
@@ -783,7 +787,8 @@ CodeAnalysisRunner class >> latexFamilyVisualizationForCounts: counts totalPacka
 			nextPutAll: ' \\';
 			cr.
 		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: '\end{tabular}'
+		stream nextPutAll: '\end{tabular}'; cr.
+		stream nextPutAll: '\endgroup'
 	]
 ]
 
@@ -794,7 +799,7 @@ CodeAnalysisRunner class >> writeLatexFamilyEntry: entry rank: rank maximumCount
 		nextPutAll: ' & ';
 		nextPutAll: (self latexEscape: entry key);
 		nextPutAll: ' & \rule{';
-		nextPutAll: (self formatMean: (entry value * 5.0 / maximumCount));
+		nextPutAll: (self formatMean: (entry value * 3.0 / maximumCount));
 		nextPutAll: 'em}{1.4ex} & ';
 		nextPutAll: (self formatTableCount: entry value)
 ]

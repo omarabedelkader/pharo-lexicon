@@ -76,7 +76,10 @@ CodeAnalysisRunnerTest >> testLatexFamilyVisualizationRanksAndIncludesAllFamilie
 		totalPackages: 275.
 
 	self assert: (latex includesSubstring: '\bfseries Count & \bfseries Rank').
-	self assert: (latex includesSubstring: '1 & Family\_1 & \rule{5.0em}{1.4ex} & 23').
+	self assert: (latex includesSubstring: '\scriptsize').
+	self assert: (latex includesSubstring: '\setlength{\tabcolsep}{2pt}').
+	self assert: (latex includesSubstring: '\renewcommand{\arraystretch}{0.85}').
+	self assert: (latex includesSubstring: '1 & Family\_1 & \rule{3.0em}{1.4ex} & 23').
 	self assert: (latex includesSubstring: '12 & Family\_12').
 	self assert: (latex includesSubstring: '21 & Family\_21').
 	self assert: (latex includesSubstring: '22 & Family\_22').
