@@ -65,7 +65,7 @@ CodeAnalysisRunnerTest >> testFamilyNameForPackageName [
 ]
 
 { #category : 'tests' }
-CodeAnalysisRunnerTest >> testLatexFamilyVisualizationRanksAndAggregatesFamilies [
+CodeAnalysisRunnerTest >> testLatexFamilyVisualizationRanksAndIncludesAllFamilies [
 	| counts latex |
 	counts := Dictionary new.
 	1 to: 22 do: [ :index |
@@ -77,11 +77,11 @@ CodeAnalysisRunnerTest >> testLatexFamilyVisualizationRanksAndAggregatesFamilies
 
 	self assert: (latex includesSubstring: '\bfseries Count & \bfseries Rank').
 	self assert: (latex includesSubstring: '1 & Family\_1 & \rule{5.0em}{1.4ex} & 23').
-	self assert: (latex includesSubstring: '11 & Family\_11').
-	self assert: (latex includesSubstring: '\multicolumn{7}{r}{Other (2 families), \emph{long tail}} & 5').
+	self assert: (latex includesSubstring: '12 & Family\_12').
+	self assert: (latex includesSubstring: '21 & Family\_21').
+	self assert: (latex includesSubstring: '22 & Family\_22').
 	self assert: (latex includesSubstring: '\bfseries 275').
-	self deny: (latex includesSubstring: 'Family\_21 &').
-	self deny: (latex includesSubstring: 'Family\_22 &')
+	self deny: (latex includesSubstring: 'Other (')
 ]
 
 { #category : 'tests' }

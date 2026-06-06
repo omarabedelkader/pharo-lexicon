@@ -742,22 +742,17 @@ CodeAnalysisRunner class >> latexTableForFamilies [
 
 { #category : 'private' }
 CodeAnalysisRunner class >> latexFamilyVisualizationForCounts: counts totalPackages: totalPackages [
-	| entries shownEntries remainingEntries maximumCount otherCount splitIndex leftEntries rightEntries |
+	| entries maximumCount splitIndex leftEntries rightEntries |
 	entries := counts associations asSortedCollection: [ :left :right |
 		left value = right value
 			ifTrue: [ left key < right key ]
 			ifFalse: [ left value > right value ] ].
-	shownEntries := entries first: (20 min: entries size).
-	remainingEntries := entries allButFirst: shownEntries size.
-	splitIndex := (shownEntries size + 1) // 2.
-	leftEntries := shownEntries first: splitIndex.
-	rightEntries := shownEntries allButFirst: splitIndex.
-	maximumCount := shownEntries
+	splitIndex := (entries size + 1) // 2.
+	leftEntries := entries first: splitIndex.
+	rightEntries := entries allButFirst: splitIndex.
+	maximumCount := entries
 		ifEmpty: [ 1 ]
-		ifNotEmpty: [ shownEntries first value ].
-	otherCount := remainingEntries
-		inject: 0
-		into: [ :total :each | total + each value ].
+		ifNotEmpty: [ entries first value ].
 
 	^ String streamContents: [ :stream |
 		stream nextPutAll: '\begin{tabular}{@{}rllr@{\qquad}rllr@{}}'; cr.
@@ -781,14 +776,6 @@ CodeAnalysisRunner class >> latexFamilyVisualizationForCounts: counts totalPacka
 						on: stream ]
 				ifFalse: [ stream nextPutAll: ' & & &' ].
 			stream nextPutAll: ' \\'; cr ].
-		remainingEntries ifNotEmpty: [
-			stream
-				nextPutAll: '\multicolumn{7}{r}{Other (';
-				nextPutAll: remainingEntries size printString;
-				nextPutAll: ' families), \emph{long tail}} & ';
-				nextPutAll: (self formatTableCount: otherCount);
-				nextPutAll: ' \\';
-				cr ].
 		stream nextPutAll: '\hline'; cr.
 		stream
 			nextPutAll: '\multicolumn{7}{r}{\bfseries Total} & \bfseries ';
