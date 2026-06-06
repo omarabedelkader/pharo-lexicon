@@ -236,8 +236,11 @@ CodeAnalysisRunner class >> families [
 
 { #category : 'private' }
 CodeAnalysisRunner class >> familyNameForPackageName: aString [
-	^ aString
-		copyUpTo: $-
+	| family |
+	family := aString copyUpTo: $-.
+	(family beginsWith: 'BaselineOf') ifTrue: [
+		^ 'Baseline' ].
+	^ family
 ]
 
 { #category : 'accessing' }
@@ -322,6 +325,20 @@ CodeAnalysisRunner class >> formatTableCount: anInteger [
 			stream nextPut: character.
 			(((digits size - index) \\ 3) = 0 and: [ index < digits size ])
 				ifTrue: [ stream nextPutAll: ',' ] ] ]
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> latexEscape: anObject [
+	| escaped |
+	escaped := anObject asString.
+	escaped := escaped copyReplaceAll: '&' with: '\&'.
+	escaped := escaped copyReplaceAll: '%' with: '\%'.
+	escaped := escaped copyReplaceAll: '$' with: '\$'.
+	escaped := escaped copyReplaceAll: '#' with: '\#'.
+	escaped := escaped copyReplaceAll: '_' with: '\_'.
+	escaped := escaped copyReplaceAll: '{' with: '\{'.
+	escaped := escaped copyReplaceAll: '}' with: '\}'.
+	^ escaped
 ]
 
 { #category : 'private' }
@@ -716,26 +733,58 @@ CodeAnalysisRunner class >> latexTableForCounts [
 
 { #category : 'running' }
 CodeAnalysisRunner class >> latexTableForFamilies [
-	| counts familyNames |
+	| counts |
 	counts := self familyPackageCountsForSelectedPackages.
-	familyNames := counts keys asSortedCollection.
+	^ self
+		latexFamilyVisualizationForCounts: counts
+		totalPackages: self selectedPackages size
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> latexFamilyVisualizationForCounts: counts totalPackages: totalPackages [
+	| entries shownEntries remainingEntries maximumCount otherCount |
+	entries := counts associations asSortedCollection: [ :left :right |
+		left value = right value
+			ifTrue: [ left key < right key ]
+			ifFalse: [ left value > right value ] ].
+	shownEntries := entries first: (20 min: entries size).
+	remainingEntries := entries allButFirst: shownEntries size.
+	maximumCount := shownEntries
+		ifEmpty: [ 1 ]
+		ifNotEmpty: [ shownEntries first value ].
+	otherCount := remainingEntries
+		inject: 0
+		into: [ :total :each | total + each value ].
 
 	^ String streamContents: [ :stream |
-		stream nextPutAll: '\begin{tabular}{lr}'; cr.
+		stream nextPutAll: '\begin{tabular}{@{}rllr@{}}'; cr.
 		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: '\bfseries Family & \bfseries Packages \\' ; cr.
+		stream nextPutAll: '\bfseries Rank & \bfseries Family & \bfseries Packages & \bfseries Count \\' ; cr.
 		stream nextPutAll: '\hline'; cr.
-		familyNames do: [ :family |
+		shownEntries doWithIndex: [ :entry :index |
 			stream
-				nextPutAll: family;
+				nextPutAll: index printString;
 				nextPutAll: ' & ';
-				nextPutAll: (self formatTableCount: (counts at: family));
+				nextPutAll: (self latexEscape: entry key);
+				nextPutAll: ' & ';
+				nextPutAll: '\rule{';
+				nextPutAll: (self formatMean: (entry value * 12.0 / maximumCount));
+				nextPutAll: 'em}{1.4ex} & ';
+				nextPutAll: (self formatTableCount: entry value);
+				nextPutAll: ' \\';
+				cr ].
+		remainingEntries ifNotEmpty: [
+			stream
+				nextPutAll: ' & Other (';
+				nextPutAll: remainingEntries size printString;
+				nextPutAll: ' families) & \emph{long tail} & ';
+				nextPutAll: (self formatTableCount: otherCount);
 				nextPutAll: ' \\';
 				cr ].
 		stream nextPutAll: '\hline'; cr.
 		stream
-			nextPutAll: 'Total & ';
-			nextPutAll: (self formatTableCount: self selectedPackages size);
+			nextPutAll: ' & \bfseries Total & & \bfseries ';
+			nextPutAll: (self formatTableCount: totalPackages);
 			nextPutAll: ' \\';
 			cr.
 		stream nextPutAll: '\hline'; cr.

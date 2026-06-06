@@ -55,7 +55,32 @@ CodeAnalysisRunnerTest >> testFamilyNameForPackageName [
 		equals: 'Collections'.
 	self
 		assert: (CodeAnalysisRunner familyNameForPackageName: 'Kernel')
-		equals: 'Kernel'
+		equals: 'Kernel'.
+	self
+		assert: (CodeAnalysisRunner familyNameForPackageName: 'BaselineOfCollections')
+		equals: 'Baseline'.
+	self
+		assert: (CodeAnalysisRunner familyNameForPackageName: 'BaselineOfSeaside3-Tests')
+		equals: 'Baseline'
+]
+
+{ #category : 'tests' }
+CodeAnalysisRunnerTest >> testLatexFamilyVisualizationRanksAndAggregatesFamilies [
+	| counts latex |
+	counts := Dictionary new.
+	1 to: 22 do: [ :index |
+		counts at: 'Family_', index printString put: 24 - index ].
+
+	latex := CodeAnalysisRunner
+		latexFamilyVisualizationForCounts: counts
+		totalPackages: 275.
+
+	self assert: (latex includesSubstring: '\bfseries Rank & \bfseries Family').
+	self assert: (latex includesSubstring: '1 & Family\_1 & \rule{12.0em}{1.4ex} & 23').
+	self assert: (latex includesSubstring: 'Other (2 families) & \emph{long tail} & 5').
+	self assert: (latex includesSubstring: '\bfseries 275').
+	self deny: (latex includesSubstring: 'Family\_21 &').
+	self deny: (latex includesSubstring: 'Family\_22 &')
 ]
 
 { #category : 'tests' }
