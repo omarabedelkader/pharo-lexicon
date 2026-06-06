@@ -227,6 +227,37 @@ CodeAnalysisRunner class >> defaultpackages: aCollection [
 	^ self defaultPackages: aCollection
 ]
 
+{ #category : 'running' }
+CodeAnalysisRunner class >> families [
+	^ self
+		saveReportNamed: self familiesTexFileName
+		generatedBy: [ self latexTableForFamilies ]
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> familyNameForPackageName: aString [
+	^ aString
+		copyUpTo: $-
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> familiesTexFileName [
+	^ 'families.tex'
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> familyPackageCountsForSelectedPackages [
+	| counts |
+	counts := Dictionary new.
+	self selectedPackages do: [ :package |
+		| family |
+		family := self familyNameForPackageName: package name.
+		counts
+			at: family
+			put: (counts at: family ifAbsent: [ 0 ]) + 1 ].
+	^ counts
+]
+
 { #category : 'private' }
 CodeAnalysisRunner class >> delimiterTokensInSelectedPackages [
 	^ self methodsInSelectedPackages flatCollect: [ :each |
@@ -678,6 +709,35 @@ CodeAnalysisRunner class >> latexTableForCounts [
 		stream nextPutAll: (self latexRowForCountsLabel: self selectedPackagesLabel values: counts); cr.
 		stream nextPutAll: '\hline'; cr.
 		stream nextPutAll: (self latexRowForCountsLabel: 'Total' values: counts); cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\end{tabular}'
+	]
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> latexTableForFamilies [
+	| counts familyNames |
+	counts := self familyPackageCountsForSelectedPackages.
+	familyNames := counts keys asSortedCollection.
+
+	^ String streamContents: [ :stream |
+		stream nextPutAll: '\begin{tabular}{lr}'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\bfseries Family & \bfseries Packages \\' ; cr.
+		stream nextPutAll: '\hline'; cr.
+		familyNames do: [ :family |
+			stream
+				nextPutAll: family;
+				nextPutAll: ' & ';
+				nextPutAll: (self formatTableCount: (counts at: family));
+				nextPutAll: ' \\';
+				cr ].
+		stream nextPutAll: '\hline'; cr.
+		stream
+			nextPutAll: 'Total & ';
+			nextPutAll: (self formatTableCount: self selectedPackages size);
+			nextPutAll: ' \\';
+			cr.
 		stream nextPutAll: '\hline'; cr.
 		stream nextPutAll: '\end{tabular}'
 	]
@@ -1378,12 +1438,11 @@ CodeAnalysisRunner class >> wordsFromCorpusValue: anObject [
 	((anObject isString) or: [ anObject isSymbol ]) ifTrue: [
 		^ self wordsFromString: anObject asString ].
 	(anObject isCharacter or: [ anObject isNumber ]) ifTrue: [ ^ #() ].
-	((anObject respondsTo: #first)
-		and: [ anObject respondsTo: #second ]
-		and: [ anObject respondsTo: #size ]
-		and: [ anObject size = 2 ]
-		and: [ self isLikelyCorpusTag: anObject second ] ]) ifTrue: [
-		^ self wordsFromCorpusValue: anObject first ].
+	((#(first second size) allSatisfy: [ :selector | anObject respondsTo: selector ])
+		and: [
+			anObject size = 2
+				and: [ self isLikelyCorpusTag: anObject second ] ]) ifTrue: [
+			^ self wordsFromCorpusValue: anObject first ].
 	(anObject isCollection and: [ anObject isString not ]) ifTrue: [
 		^ anObject flatCollect: [ :each | self wordsFromCorpusValue: each ] ].
 	providerValue := self wordsFromCorpusProvider: anObject.

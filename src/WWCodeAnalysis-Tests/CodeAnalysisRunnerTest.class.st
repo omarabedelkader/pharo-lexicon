@@ -37,6 +37,7 @@ CodeAnalysisRunnerTest >> testTexFileName [
 	self assert: CodeAnalysisRunner countsTexFileName equals: 'counts.tex'.
 	self assert: CodeAnalysisRunner boxplotDistributionPlotCsvFileName equals: 'size_distribution_plot.csv'.
 	self assert: CodeAnalysisRunner classesPerPackageTexFileName equals: 'all_classes_per_package.tex'.
+	self assert: CodeAnalysisRunner familiesTexFileName equals: 'families.tex'.
 	self assert: CodeAnalysisRunner locPerNonDataMethodTexFileName equals: 'all_loc_per_non_data_method.tex'.
 	self assert: CodeAnalysisRunner methodsPerClassTexFileName equals: 'all_methods_per_class.tex'.
 	self assert: CodeAnalysisRunner pharoIdentifierNamesDistributionTexFileName equals: 'pharo_identifier_names_distribution.tex'.
@@ -45,6 +46,16 @@ CodeAnalysisRunnerTest >> testTexFileName [
 	self assert: CodeAnalysisRunner testTableTexFileName equals: 'test_table.tex'.
 	self assert: CodeAnalysisRunner wordCountsTexFileName equals: 'word_counts.tex'.
 	self assert: CodeAnalysisRunner tokensPerMethodTexFileName equals: 'all_tokens_per_method.tex'
+]
+
+{ #category : 'tests' }
+CodeAnalysisRunnerTest >> testFamilyNameForPackageName [
+	self
+		assert: (CodeAnalysisRunner familyNameForPackageName: 'Collections-Abstract')
+		equals: 'Collections'.
+	self
+		assert: (CodeAnalysisRunner familyNameForPackageName: 'Kernel')
+		equals: 'Kernel'
 ]
 
 { #category : 'tests' }

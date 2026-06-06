@@ -34,6 +34,9 @@ CodeAnalysisRunner alltokenspermethod.
 CodeAnalysisRunner counts.
 "writes counts.tex"
 
+CodeAnalysisRunner families.
+"writes families.tex"
+
 CodeAnalysisRunner pharoIdentifierNamesDistribution.
 "writes pharo_identifier_names_distribution.tex"
 
@@ -43,14 +46,11 @@ CodeAnalysisRunner pharoLiteralDistribution.
 CodeAnalysisRunner pharoTokenTypeDistribution.
 "writes pharo_token_type_distribution.tex"
 
-CodeAnalysisRunner boxplotdistributionplot.
-"writes size_distribution_plot.csv"
-
-CodeAnalysisRunner boxplotditributionplot.
-"same as boxplotdistributionplot"
-
 CodeAnalysisRunner wordcounts.
 "writes word_counts.tex"
+
+CodeAnalysisRunner testtable.
+"writes test_table.tex"
 
 ```
 
