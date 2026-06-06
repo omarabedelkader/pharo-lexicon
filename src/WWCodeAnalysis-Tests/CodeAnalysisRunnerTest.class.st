@@ -65,26 +65,27 @@ CodeAnalysisRunnerTest >> testFamilyNameForPackageName [
 ]
 
 { #category : 'tests' }
-CodeAnalysisRunnerTest >> testLatexFamilyVisualizationRanksAndIncludesAllFamilies [
+CodeAnalysisRunnerTest >> testLatexFamilyVisualizationShowsTopFiftyFamilies [
 	| counts latex |
 	counts := Dictionary new.
-	1 to: 22 do: [ :index |
-		counts at: 'Family_', index printString put: 24 - index ].
+	1 to: 52 do: [ :index |
+		counts at: 'Family_', index printString put: 54 - index ].
 
 	latex := CodeAnalysisRunner
 		latexFamilyVisualizationForCounts: counts
-		totalPackages: 275.
+		totalPackages: 1378.
 
 	self assert: (latex includesSubstring: '\bfseries Count & \bfseries Rank').
 	self assert: (latex includesSubstring: '\scriptsize').
 	self assert: (latex includesSubstring: '\setlength{\tabcolsep}{2pt}').
 	self assert: (latex includesSubstring: '\renewcommand{\arraystretch}{0.85}').
-	self assert: (latex includesSubstring: '1 & Family\_1 & \rule{3.0em}{1.4ex} & 23').
-	self assert: (latex includesSubstring: '12 & Family\_12').
-	self assert: (latex includesSubstring: '21 & Family\_21').
-	self assert: (latex includesSubstring: '22 & Family\_22').
-	self assert: (latex includesSubstring: '\bfseries 275').
-	self deny: (latex includesSubstring: 'Other (')
+	self assert: (latex includesSubstring: '1 & Family\_1 & \rule{3.0em}{1.4ex} & 53').
+	self assert: (latex includesSubstring: '26 & Family\_26').
+	self assert: (latex includesSubstring: '50 & Family\_50').
+	self assert: (latex includesSubstring: '\multicolumn{7}{r}{Other 2 families} & 5').
+	self assert: (latex includesSubstring: '\bfseries 1,378').
+	self deny: (latex includesSubstring: 'Family\_51 &').
+	self deny: (latex includesSubstring: 'Family\_52 &')
 ]
 
 { #category : 'tests' }
