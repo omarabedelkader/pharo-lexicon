@@ -448,22 +448,46 @@ CodeAnalysisRunner class >> isDelimiterToken: aString [
 
 { #category : 'private' }
 CodeAnalysisRunner class >> isGlobalVariableNode: aNode [
-	((aNode respondsTo: #isGlobalVariable) and: [ aNode isGlobalVariable ]) ifTrue: [ ^ true ].
-	((aNode respondsTo: #isGlobal) and: [ aNode isGlobal ]) ifTrue: [ ^ true ].
-	^ false
+	| className globalName globalValue isGlobalNode |
+	className := aNode class name asString.
+
+	isGlobalNode :=
+		((aNode respondsTo: #isGlobalVariable) and: [ aNode isGlobalVariable ])
+			or: [
+				((aNode respondsTo: #isGlobal) and: [ aNode isGlobal ])
+					or: [ className includesSubstring: 'Global' ] ].
+
+	isGlobalNode ifFalse: [ ^ false ].
+	(aNode respondsTo: #name) ifFalse: [ ^ false ].
+
+	globalName := aNode name asSymbol.
+	(Smalltalk globals includesKey: globalName) ifFalse: [ ^ false ].
+
+	globalValue := Smalltalk globals at: globalName.
+
+	"Do not count classes here; classes already have their own row."
+	^ globalValue isClass not
 ]
 
 { #category : 'private' }
 CodeAnalysisRunner class >> isLiteralArrayNode: aNode [
+	| className |
 	((aNode respondsTo: #isLiteralArray) and: [ aNode isLiteralArray ]) ifTrue: [ ^ true ].
-	^ aNode class name = 'RBLiteralArrayNode'
+
+	className := aNode class name asString.
+	^ (className includesSubstring: 'Literal')
+		and: [ className includesSubstring: 'Array' ]
 ]
 
 { #category : 'private' }
 CodeAnalysisRunner class >> isLiteralNode: aNode [
+	| className |
 	((aNode respondsTo: #isLiteralNode) and: [ aNode isLiteralNode ]) ifTrue: [ ^ true ].
 	((aNode respondsTo: #isLiteral) and: [ aNode isLiteral ]) ifTrue: [ ^ true ].
-	^ #('RBLiteralValueNode' 'RBLiteralNode') includes: aNode class name
+
+	className := aNode class name asString.
+	^ (className includesSubstring: 'Literal')
+		and: [ (className includesSubstring: 'Array') not ]
 ]
 
 { #category : 'private' }
@@ -1062,13 +1086,34 @@ CodeAnalysisRunner class >> literalEntriesOfMethod: aCompiledMethod [
 	(parseTree respondsTo: #nodesDo:) ifFalse: [ ^ #() ].
 
 	literals := OrderedCollection new.
+
 	parseTree nodesDo: [ :node |
-		(self isLiteralArrayNode: node) ifTrue: [
-			literals add: ('Literal arrays' -> node value) ].
-		(self isLiteralNode: node) ifTrue: [
-			(self literalTypeFor: node value)
-				ifNotNil: [ :type | literals add: (type -> node value) ] ] ].
+		(self isLiteralArrayNode: node)
+			ifTrue: [
+				literals add: ('Literal arrays' -> node value).
+				literals addAll: (self literalEntriesFromValue: node value) ]
+			ifFalse: [
+				(self isLiteralNode: node) ifTrue: [
+					literals addAll: (self literalEntriesFromValue: node value) ] ] ].
+
 	^ literals asArray
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> literalEntriesFromValue: anObject [
+	| type |
+	anObject ifNil: [ ^ #() ].
+
+	((anObject isCollection)
+		and: [ anObject isString not and: [ anObject isSymbol not ] ])
+			ifTrue: [
+				^ anObject flatCollect: [ :each |
+					self literalEntriesFromValue: each ] ].
+
+	type := self literalTypeFor: anObject.
+	type ifNil: [ ^ #() ].
+
+	^ { type -> anObject }
 ]
 
 { #category : 'private' }
@@ -1384,14 +1429,51 @@ CodeAnalysisRunner class >> testTableTexFileName [
 
 { #category : 'private' }
 CodeAnalysisRunner class >> stemFor: aString [
-	| porter stemmer |
+	| porter stemmer word |
+	word := aString asLowercase.
+
 	porter := self globalNamedAnyOf: #('PorterStemmer' 'SnowballStemmer' 'EnglishStemmer').
+
 	porter ifNotNil: [
-		(porter respondsTo: #stem:) ifTrue: [ ^ (porter stem: aString) asLowercase ].
+		(porter respondsTo: #stem:) ifTrue: [ ^ (porter stem: word) asLowercase ].
 		(porter respondsTo: #new) ifTrue: [
 			stemmer := porter new.
-			(stemmer respondsTo: #stem:) ifTrue: [ ^ (stemmer stem: aString) asLowercase ] ] ].
-	^ aString asLowercase
+			(stemmer respondsTo: #stem:) ifTrue: [ ^ (stemmer stem: word) asLowercase ] ] ].
+
+	^ self simpleStemFor: word
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> simpleStemFor: aString [
+	| word replacements |
+	word := aString asLowercase.
+	word size <= 3 ifTrue: [ ^ word ].
+
+	replacements := {
+		'ization' -> 'ize'.
+		'ational' -> 'ate'.
+		'fulness' -> 'ful'.
+		'ousness' -> 'ous'.
+		'iveness' -> 'ive'.
+		'tional' -> 'tion'.
+		'ation' -> 'ate'.
+		'ingly' -> ''.
+		'edly' -> ''.
+		'izer' -> 'ize'.
+		'ing' -> ''.
+		'ied' -> 'y'.
+		'ies' -> 'y'.
+		'ed' -> '' }.
+
+	replacements do: [ :each |
+		((word size > each key size + 2) and: [ word endsWith: each key ])
+			ifTrue: [ ^ (word copyFrom: 1 to: word size - each key size), each value ] ].
+
+	((word size > 4)
+		and: [ (word endsWith: 's') and: [ (word endsWith: 'ss') not ] ])
+			ifTrue: [ ^ word copyFrom: 1 to: word size - 1 ].
+
+	^ word
 ]
 
 { #category : 'private' }

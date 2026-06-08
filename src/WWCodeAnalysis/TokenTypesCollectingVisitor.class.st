@@ -65,11 +65,14 @@ TokenTypesCollectingVisitor >> visitBlockNode: aBlockNode [
 
 { #category : 'visiting' }
 TokenTypesCollectingVisitor >> visitGlobalNode: aGlobalNode [
-	(Smalltalk globals includesKey: aGlobalNode name)
+	| globalName |
+	globalName := aGlobalNode name asSymbol.
+
+	(Smalltalk globals includesKey: globalName)
 		ifFalse: [
 			tokens add: 'CVR' ]
 		ifTrue: [
-			tokens add: ((Smalltalk globals at: aGlobalNode name) isClass
+			tokens add: ((Smalltalk globals at: globalName) isClass
 				ifTrue: [ 'CLS' ]
 				ifFalse: [ 'GLB' ]) ]
 ]
