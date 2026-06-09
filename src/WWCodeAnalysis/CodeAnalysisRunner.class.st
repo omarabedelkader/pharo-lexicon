@@ -77,6 +77,20 @@ CodeAnalysisRunner class >> allWordsInCorpus: aCollection [
 ]
 
 { #category : 'running' }
+CodeAnalysisRunner class >> listpackages [
+	^ self
+		saveReportNamed: self listPackagesTexFileName
+		generatedBy: [ self latexTableForPackages ]
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> listpackagestest [
+	^ self
+		saveReportNamed: self listPackagesTestTexFileName
+		generatedBy: [ self latexTableForPackagesTest ]
+]
+
+{ #category : 'running' }
 CodeAnalysisRunner class >> allclassesperpackage [
 	^ self allClassesPerPackage
 ]
@@ -154,6 +168,16 @@ CodeAnalysisRunner class >> classesOfPackage: aPackage [
 { #category : 'accessing' }
 CodeAnalysisRunner class >> boxplotDistributionPlotCsvFileName [
 	^ 'size_distribution_plot.csv'
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> listPackagesTexFileName [
+	^ 'list_table.tex'
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> listPackagesTestTexFileName [
+	^ 'list_test_table.tex'
 ]
 
 { #category : 'accessing' }
@@ -1420,6 +1444,44 @@ CodeAnalysisRunner class >> testTableCountsForSelectedPackages [
 		#tokenTotal -> (self sum: (self tokenCountsForMethods: methods)).
 		#tokenTest -> (self sum: (self tokenCountsForMethods: testMethods)).
 		#tokenNonTest -> (self sum: (self tokenCountsForMethods: nonTestMethods)) }
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> projectMetrics [
+	| projects |
+	projects := Dictionary new.
+	self selectedPackages do: [ :package |
+		| projectName metrics |
+		projectName := self familyNameForPackageName: package name.
+		metrics := projects at: projectName ifAbsentPut: [ Dictionary newFrom: { #packages -> 0. #classes -> 0. #methods -> 0. #loc -> 0 } ].
+		metrics at: #packages put: (metrics at: #packages) + 1.
+		metrics at: #classes put: (metrics at: #classes) + (self classCountOf: package).
+		metrics at: #methods put: (metrics at: #methods) + package methods size.
+		metrics at: #loc put: (metrics at: #loc) + (self sum: (self linesOfCodeForMethods: package methods)) ].
+	^ projects
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> packageTestMetrics [
+	| metrics |
+	metrics := OrderedCollection new.
+	self selectedPackages do: [ :package |
+		| classes methods testClasses testMethods |
+		classes := self classesOfPackage: package.
+		methods := package methods.
+		testClasses := classes select: [ :each | self isTestClass: each ].
+		testMethods := methods select: [ :each | self isTestMethod: each ].
+		
+		metrics add: (Dictionary newFrom: {
+			#name -> package name.
+			#classCount -> classes size.
+			#methodCount -> methods size.
+			#testClasses -> testClasses size.
+			#testMethods -> testMethods size.
+			#testPercentage -> (self formatTablePercentage: testMethods size over: methods size)
+		})
+	].
+	^ metrics
 ]
 
 { #category : 'accessing' }
