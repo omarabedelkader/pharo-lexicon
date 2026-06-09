@@ -129,12 +129,14 @@ CodeAnalysisRunner class >> latexTableForPackagesTest [
 		stream nextPutAll: 'Test Package & \bfseries Classes & \bfseries Methods & \bfseries Test Classes & \bfseries Test Methods & \bfseries Test \% \\' ; cr.
 		stream nextPutAll: '\hline'; cr.
 		metrics do: [ :m |
+			| percentage |
+			percentage := (m at: #testPercentage) copyReplaceAll: '%' with: '\%'.
 			stream nextPutAll: (self latexEscape: (m at: #name)); nextPutAll: ' & '.
 			stream nextPutAll: (self formatTableCount: (m at: #classCount)); nextPutAll: ' & '.
 			stream nextPutAll: (self formatTableCount: (m at: #methodCount)); nextPutAll: ' & '.
 			stream nextPutAll: (self formatTableCount: (m at: #testClasses)); nextPutAll: ' & '.
 			stream nextPutAll: (self formatTableCount: (m at: #testMethods)); nextPutAll: ' & '.
-			stream nextPutAll: (m at: #testPercentage); nextPutAll: ' \\'; cr ].
+			stream nextPutAll: percentage; nextPutAll: ' \\'; cr ].
 		stream nextPutAll: '\hline'; cr.
 		stream nextPutAll: '\end{tabular}'
 	]
