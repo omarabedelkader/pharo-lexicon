@@ -77,18 +77,48 @@ CodeAnalysisRunner class >> allWordsInCorpus: aCollection [
 ]
 
 { #category : 'running' }
-CodeAnalysisRunner class >> listpackages [
-	^ self
-		saveReportNamed: self listPackagesTexFileName
-		generatedBy: [ self latexTableForPackages ]
+CodeAnalysisRunner class >> latexTableForPackages [
+	| metrics |
+	metrics := self projectMetrics.
+	^ String streamContents: [ :stream |
+		stream nextPutAll: '\begin{tabular}{lrrrr}'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\bfseries Project & \bfseries Packages & \bfseries Classes & \bfseries Methods & \bfseries LOC \\' ; cr.
+		stream nextPutAll: '\hline'; cr.
+		metrics keys asSortedCollection do: [ :key |
+			| m |
+			m := metrics at: key.
+			stream nextPutAll: (self latexEscape: key); nextPutAll: ' & '.
+			stream nextPutAll: (self formatTableCount: (m at: #packages)); nextPutAll: ' & '.
+			stream nextPutAll: (self formatTableCount: (m at: #classes)); nextPutAll: ' & '.
+			stream nextPutAll: (self formatTableCount: (m at: #methods)); nextPutAll: ' & '.
+			stream nextPutAll: (self formatTableCount: (m at: #loc)); nextPutAll: ' \\'; cr ].
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\end{tabular}'
+	]
 ]
 
 { #category : 'running' }
-CodeAnalysisRunner class >> listpackagestest [
-	^ self
-		saveReportNamed: self listPackagesTestTexFileName
-		generatedBy: [ self latexTableForPackagesTest ]
+CodeAnalysisRunner class >> latexTableForPackagesTest [
+	| metrics |
+	metrics := self packageTestMetrics.
+	^ String streamContents: [ :stream |
+		stream nextPutAll: '\begin{tabular}{lrrrrr}'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: 'Test Package & \bfseries Classes & \bfseries Methods & \bfseries Test Classes & \bfseries Test Methods & \bfseries Test \% \\' ; cr.
+		stream nextPutAll: '\hline'; cr.
+		metrics do: [ :m |
+			stream nextPutAll: (self latexEscape: (m at: #name)); nextPutAll: ' & '.
+			stream nextPutAll: (self formatTableCount: (m at: #classCount)); nextPutAll: ' & '.
+			stream nextPutAll: (self formatTableCount: (m at: #methodCount)); nextPutAll: ' & '.
+			stream nextPutAll: (self formatTableCount: (m at: #testClasses)); nextPutAll: ' & '.
+			stream nextPutAll: (self formatTableCount: (m at: #testMethods)); nextPutAll: ' & '.
+			stream nextPutAll: (m at: #testPercentage); nextPutAll: ' \\'; cr ].
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\end{tabular}'
+	]
 ]
+
 
 { #category : 'running' }
 CodeAnalysisRunner class >> allclassesperpackage [
