@@ -77,6 +77,20 @@ CodeAnalysisRunner class >> allWordsInCorpus: aCollection [
 ]
 
 { #category : 'running' }
+CodeAnalysisRunner class >> listpackages [
+	^ self
+		saveReportNamed: self listPackagesTexFileName
+		generatedBy: [ self latexTableForPackages ]
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> listpackagestest [
+	^ self
+		saveReportNamed: self listPackagesTestTexFileName
+		generatedBy: [ self latexTableForPackagesTest ]
+]
+
+{ #category : 'running' }
 CodeAnalysisRunner class >> latexTableForPackages [
 	| metrics |
 	metrics := self projectMetrics.
