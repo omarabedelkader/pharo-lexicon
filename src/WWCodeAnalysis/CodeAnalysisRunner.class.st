@@ -99,6 +99,14 @@ CodeAnalysisRunner class >> latexTableForPackages [
 		stream nextPutAll: '\hline'; cr.
 		stream nextPutAll: '\bfseries Project & \bfseries Packages & \bfseries Classes & \bfseries Methods & \bfseries LOC \\' ; cr.
 		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\endfirsthead'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\bfseries Project & \bfseries Packages & \bfseries Classes & \bfseries Methods & \bfseries LOC \\' ; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\endhead'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\endfoot'; cr.
+		stream nextPutAll: '\endlastfoot'; cr.
 		metrics keys asSortedCollection do: [ :key |
 			| m |
 			m := metrics at: key.
@@ -107,7 +115,6 @@ CodeAnalysisRunner class >> latexTableForPackages [
 			stream nextPutAll: (self formatTableCount: (m at: #classes)); nextPutAll: ' & '.
 			stream nextPutAll: (self formatTableCount: (m at: #methods)); nextPutAll: ' & '.
 			stream nextPutAll: (self formatTableCount: (m at: #loc)); nextPutAll: ' \\'; cr ].
-		stream nextPutAll: '\hline'; cr.
 		stream nextPutAll: '\end{longtable}'
 	]
 ]
