@@ -124,10 +124,18 @@ CodeAnalysisRunner class >> latexTableForPackagesTest [
 	| metrics |
 	metrics := self packageTestMetrics.
 	^ String streamContents: [ :stream |
-		stream nextPutAll: '\begin{tabular}{lrrrrr}'; cr.
+		stream nextPutAll: '\begin{longtable}{lrrrrr}'; cr.
 		stream nextPutAll: '\hline'; cr.
 		stream nextPutAll: 'Test Package & \bfseries Classes & \bfseries Methods & \bfseries Test Classes & \bfseries Test Methods & \bfseries Test \% \\' ; cr.
 		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\endfirsthead'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: 'Test Package & \bfseries Classes & \bfseries Methods & \bfseries Test Classes & \bfseries Test Methods & \bfseries Test \% \\' ; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\endhead'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\endfoot'; cr.
+		stream nextPutAll: '\endlastfoot'; cr.
 		metrics do: [ :m |
 			| percentage |
 			percentage := (m at: #testPercentage) copyReplaceAll: '%' with: '\%'.
@@ -137,8 +145,7 @@ CodeAnalysisRunner class >> latexTableForPackagesTest [
 			stream nextPutAll: (self formatTableCount: (m at: #testClasses)); nextPutAll: ' & '.
 			stream nextPutAll: (self formatTableCount: (m at: #testMethods)); nextPutAll: ' & '.
 			stream nextPutAll: percentage; nextPutAll: ' \\'; cr ].
-		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: '\end{tabular}'
+		stream nextPutAll: '\end{longtable}'
 	]
 ]
 
