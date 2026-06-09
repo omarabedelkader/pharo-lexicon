@@ -95,7 +95,7 @@ CodeAnalysisRunner class >> latexTableForPackages [
 	| metrics |
 	metrics := self projectMetrics.
 	^ String streamContents: [ :stream |
-		stream nextPutAll: '\begin{tabular}{lrrrr}'; cr.
+		stream nextPutAll: '\begin{longtable}{lrrrr}'; cr.
 		stream nextPutAll: '\hline'; cr.
 		stream nextPutAll: '\bfseries Project & \bfseries Packages & \bfseries Classes & \bfseries Methods & \bfseries LOC \\' ; cr.
 		stream nextPutAll: '\hline'; cr.
@@ -108,7 +108,7 @@ CodeAnalysisRunner class >> latexTableForPackages [
 			stream nextPutAll: (self formatTableCount: (m at: #methods)); nextPutAll: ' & '.
 			stream nextPutAll: (self formatTableCount: (m at: #loc)); nextPutAll: ' \\'; cr ].
 		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: '\end{tabular}'
+		stream nextPutAll: '\end{longtable}'
 	]
 ]
 
