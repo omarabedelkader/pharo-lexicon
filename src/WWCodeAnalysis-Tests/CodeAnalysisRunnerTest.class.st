@@ -45,7 +45,8 @@ CodeAnalysisRunnerTest >> testTexFileName [
 	self assert: CodeAnalysisRunner pharoTokenTypeDistributionTexFileName equals: 'pharo_token_type_distribution.tex'.
 	self assert: CodeAnalysisRunner testTableTexFileName equals: 'test_table.tex'.
 	self assert: CodeAnalysisRunner wordCountsTexFileName equals: 'word_counts.tex'.
-	self assert: CodeAnalysisRunner tokensPerMethodTexFileName equals: 'all_tokens_per_method.tex'
+	self assert: CodeAnalysisRunner tokensPerMethodTexFileName equals: 'all_tokens_per_method.tex'.
+	self assert: CodeAnalysisRunner top10PackagesByTheNumberOfClassesTexFileName equals: 'top_10_packages_by_class_count.tex'
 ]
 
 { #category : 'tests' }
@@ -88,6 +89,26 @@ CodeAnalysisRunnerTest >> testLatexFamilyVisualizationShowsTopHundredFamilies [
 	self assert: (latex includesSubstring: '\bfseries 2,000').
 	self deny: (latex includesSubstring: 'Family\_101 &').
 	self deny: (latex includesSubstring: 'Family\_105 &')
+]
+
+{ #category : 'tests' }
+CodeAnalysisRunnerTest >> testLatexTableForTop10PackagesByTheNumberOfClasses [
+	| data latex |
+	data := {
+		Dictionary newFrom: { #project -> 'P1'. #package -> 'Pkg1'. #classes -> 10 }.
+		Dictionary newFrom: { #project -> 'P2'. #package -> 'Pkg2'. #classes -> 20 }.
+		Dictionary newFrom: { #project -> 'P3'. #package -> 'Pkg3'. #classes -> 5 }
+	}.
+
+	latex := CodeAnalysisRunner latexTableForTop10PackagesByTheNumberOfClasses: data.
+
+	self assert: (latex includesSubstring: '\bfseries Project & \bfseries Package & \bfseries \# of classes').
+	self assert: (latex includesSubstring: 'P2 & Pkg2 & 20').
+	self assert: (latex includesSubstring: 'P1 & Pkg1 & 10').
+	self assert: (latex includesSubstring: 'P3 & Pkg3 & 5').
+	"Check order: P2 should come before P1"
+	self assert: (latex indexOfSubstring: 'Pkg2') < (latex indexOfSubstring: 'Pkg1').
+	self assert: (latex indexOfSubstring: 'Pkg1') < (latex indexOfSubstring: 'Pkg3')
 ]
 
 { #category : 'tests' }

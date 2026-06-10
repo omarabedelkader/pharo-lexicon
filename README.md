@@ -38,6 +38,9 @@ CodeAnalysisRunner families.
 "writes families.tex as a compact three-column ranked summary of the 100 largest families;
 all BaselineOf packages form one Baseline family"
 
+CodeAnalysisRunner top10PackagesByTheNumberOfClasses.
+"writes top_10_packages_by_class_count.tex"
+
 CodeAnalysisRunner pharoIdentifierNamesDistribution.
 "writes pharo_identifier_names_distribution.tex"
 

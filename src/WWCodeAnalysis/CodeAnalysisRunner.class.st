@@ -71,6 +71,18 @@ CodeAnalysisRunner class >> boxplotditributionplot [
 	^ self boxplotdistributionplot
 ]
 
+{ #category : 'running' }
+CodeAnalysisRunner class >> top10PackagesByTheNumberOfClasses [
+	^ self
+		saveReportNamed: self top10PackagesByTheNumberOfClassesTexFileName
+		generatedBy: [ self latexTableForTop10PackagesByTheNumberOfClasses ]
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> top10packagesbythenumberofclasses [
+	^ self top10PackagesByTheNumberOfClasses
+]
+
 { #category : 'private' }
 CodeAnalysisRunner class >> allWordsInCorpus: aCollection [
 	^ aCollection flatCollect: [ :each | self wordsFromCorpusValue: each ]
@@ -243,6 +255,11 @@ CodeAnalysisRunner class >> listPackagesTestTexFileName [
 { #category : 'accessing' }
 CodeAnalysisRunner class >> classesPerPackageTexFileName [
 	^ 'all_classes_per_package.tex'
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> top10PackagesByTheNumberOfClassesTexFileName [
+	^ 'top_10_packages_by_class_count.tex'
 ]
 
 { #category : 'running' }
@@ -846,6 +863,49 @@ CodeAnalysisRunner class >> latexTableForFamilies [
 	^ self
 		latexFamilyVisualizationForCounts: counts
 		totalPackages: self selectedPackages size
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> latexTableForTop10PackagesByTheNumberOfClasses [
+	| packages data |
+	packages := self selectedPackages.
+	data := packages collect: [ :each |
+		Dictionary newFrom: {
+			#project -> (self familyNameForPackageName: each name).
+			#package -> each name.
+			#classes -> (self classCountOf: each)
+		}
+	].
+	^ self latexTableForTop10PackagesByTheNumberOfClasses: data
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> latexTableForTop10PackagesByTheNumberOfClasses: data [
+	| sortedData |
+	sortedData := data asSortedCollection: [ :a :b |
+		(a at: #classes) > (b at: #classes) or: [
+			(a at: #classes) = (b at: #classes) and: [ (a at: #package) < (b at: #package) ]
+		]
+	].
+	sortedData := sortedData first: (10 min: sortedData size).
+
+	^ String streamContents: [ :stream |
+		stream nextPutAll: '\begin{tabular}{llr}'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\bfseries Project & \bfseries Package & \bfseries \# of classes \\'; cr.
+		stream nextPutAll: '\hline'; cr.
+		sortedData do: [ :each |
+			stream
+				nextPutAll: (self latexEscape: (each at: #project));
+				nextPutAll: ' & ';
+				nextPutAll: (self latexEscape: (each at: #package));
+				nextPutAll: ' & ';
+				nextPutAll: (self formatTableCount: (each at: #classes));
+				nextPutAll: ' \\';
+				cr ].
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\end{tabular}'
+	]
 ]
 
 { #category : 'private' }
