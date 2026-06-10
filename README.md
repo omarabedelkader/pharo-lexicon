@@ -94,48 +94,24 @@ CodeAnalysisRunner listpackagestest.
 
 ```
 
-Then render the actual figure with:
+Downlaod these projects:
 
-```bash
-python3 scripts/plot_size_distribution.py size_distribution_plot.csv -o size_distribution_plot.png
-```
-
-
-```smalltalk
-
-
-Metacello new
-  githubUser: 'omarabedelkader' project: 'pharo-lexicon' commitish: 'main' path: 'src';
-  baseline: 'PharoLexicon';
-  load.
-
-Metacello new
- baseline:'Seaside3';
- repository: 'github://SeasideSt/Seaside:master/repository';
- load.
-
-Metacello new
-  githubUser: 'pharo-llm' project: 'pharo-copilot' commitish: 'main' path: 'src';
-  baseline: 'AIPharoCopilot';
-  load.
-
-Metacello new
-  githubUser: 'pharo-llm' project: 'pharo-mcp' commitish: 'main' path: 'src';
-  baseline: 'LLMPharoMCP';
-  load.
+- Roassal
+- Bloc and Toplo
+- Seaside3
+- Moose with Pharo 14
+- Dataframe
+- PolyMath 
+- ChatPharo
+- Copilot 
+- Pharo-MCP
+- Pharo-RAG
+- Pharo-ACP
 
 
-Metacello new
-  githubUser: 'pharo-llm' project: 'chatpharo' commitish: 'main' path: 'src';
-  baseline: 'AIChatPharo';
-  load.
+To downlaod the NLTK dataset :
 
+python3 -m venv venv
+source venv/bin/activate
+python downloadcoprus.py
 
-Metacello new
-  githubUser: 'pharo-llm' project: 'pharo-acp' commitish: 'main' path: 'src';
-  baseline: 'LLMPharoACP';
-  load.
-
-
-
-```
