@@ -13,6 +13,15 @@ Class {
 	#tag : 'Models'
 }
 
+{ #category : 'initialization' }
+PackageModel >> initialize [
+	super initialize.
+	methods := #().
+	rInt := 0.
+	rExt := 0.
+	rhoInt := 0.0
+]
+
 { #category : 'accessing' }
 PackageModel >> methods [
 	^ methods
@@ -61,13 +70,4 @@ PackageModel >> rhoInt [
 { #category : 'accessing' }
 PackageModel >> rhoInt: anObject [
 	rhoInt := anObject
-]
-
-{ #category : 'initialization' }
-PackageModel >> initialize [
-	super initialize.
-	methods := #().
-	rInt := 0.
-	rExt := 0.
-	rhoInt := 0.0
 ]

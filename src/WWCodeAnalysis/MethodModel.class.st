@@ -42,6 +42,19 @@ MethodModel >> id: anObject [
 	id := anObject
 ]
 
+{ #category : 'initialization' }
+MethodModel >> initialize [
+	super initialize.
+	tokens := #().
+	tokenTypes := #().
+	subtokens := #().
+	words := #().
+	allWords := #().
+	isTestClass := false.
+	rInt := 0.
+	rExt := 0
+]
+
 { #category : 'accessing' }
 MethodModel >> isTestClass [
 	^ isTestClass
@@ -160,17 +173,4 @@ MethodModel >> words [
 { #category : 'accessing' }
 MethodModel >> words: anObject [
 	words := anObject
-]
-
-{ #category : 'initialization' }
-MethodModel >> initialize [
-	super initialize.
-	tokens := #().
-	tokenTypes := #().
-	subtokens := #().
-	words := #().
-	allWords := #().
-	isTestClass := false.
-	rInt := 0.
-	rExt := 0
 ]

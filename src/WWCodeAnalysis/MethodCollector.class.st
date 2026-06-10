@@ -46,12 +46,12 @@ MethodCollector >> collectDataFromMethod: aMethod internalClasses: aCollection [
 ]
 
 { #category : 'collecting' }
-MethodCollector >> collectMethodsFromPackage: aPackage internalClasses: aCollection [
+MethodCollector >> collectMethodsFromPackage: aPackage [
 	| methods |
 	methods := OrderedCollection new.
 
 	aPackage methods do: [ :aMethod |
-		methods add: (self collectDataFromMethod: aMethod internalClasses: aCollection) ].
+		methods add: (self collectDataFromMethod: aMethod) ].
 
 	^ PackageModel new
 		name: aPackage name;
@@ -60,12 +60,12 @@ MethodCollector >> collectMethodsFromPackage: aPackage internalClasses: aCollect
 ]
 
 { #category : 'collecting' }
-MethodCollector >> collectMethodsFromPackage: aPackage [
+MethodCollector >> collectMethodsFromPackage: aPackage internalClasses: aCollection [
 	| methods |
 	methods := OrderedCollection new.
 
 	aPackage methods do: [ :aMethod |
-		methods add: (self collectDataFromMethod: aMethod) ].
+		methods add: (self collectDataFromMethod: aMethod internalClasses: aCollection) ].
 
 	^ PackageModel new
 		name: aPackage name;

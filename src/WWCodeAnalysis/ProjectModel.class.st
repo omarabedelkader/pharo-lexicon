@@ -14,6 +14,16 @@ Class {
 	#tag : 'Models'
 }
 
+{ #category : 'initialization' }
+ProjectModel >> initialize [
+	super initialize.
+	packages := #().
+	prefixes := #().
+	rInt := 0.
+	rExt := 0.
+	rhoInt := 0.0
+]
+
 { #category : 'accessing' }
 ProjectModel >> name [
 	^ name
@@ -72,14 +82,4 @@ ProjectModel >> rhoInt [
 { #category : 'accessing' }
 ProjectModel >> rhoInt: anObject [
 	rhoInt := anObject
-]
-
-{ #category : 'initialization' }
-ProjectModel >> initialize [
-	super initialize.
-	packages := #().
-	prefixes := #().
-	rInt := 0.
-	rExt := 0.
-	rhoInt := 0.0
 ]
