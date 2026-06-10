@@ -3,7 +3,8 @@ Class {
 	#superclass : 'Object',
 	#classInstVars : [
 		'outputDirectory',
-		'packageNames'
+		'packageNames',
+		'dataDirectory'
 	],
 	#category : 'WWCodeAnalysis-Runners',
 	#package : 'WWCodeAnalysis',
@@ -110,7 +111,7 @@ CodeAnalysisRunner class >> boxplotditributionplot [
 { #category : 'private' }
 CodeAnalysisRunner class >> brownCorpusWords [
 
-	^ self corpusTextFromFileNamed: 'brown.txt'
+	^ self corpusWordsFromFileNamed: 'brown.txt'
 ]
 
 { #category : 'private' }
@@ -163,6 +164,27 @@ CodeAnalysisRunner class >> classesPerPackageTexFileName [
 ]
 
 { #category : 'private' }
+CodeAnalysisRunner class >> corporaDirectory [
+
+	| root |
+	root := self dataDirectory asFileReference.
+
+	root basename = 'corpora' ifTrue: [ ^ root ].
+
+	(root / 'corpora') exists ifTrue: [
+		^ root / 'corpora' ].
+
+	(root / 'data' / 'corpora') exists ifTrue: [
+		^ root / 'data' / 'corpora' ].
+
+	self error:
+		'No corpora directory found. Tried: ',
+		(root / 'corpora') fullName,
+		' and ',
+		(root / 'data' / 'corpora') fullName
+]
+
+{ #category : 'private' }
 CodeAnalysisRunner class >> corpusFileNamed: aFileName [
 
 	^ self imageWorkingDirectory / 'data' / 'corpora' / aFileName
@@ -176,6 +198,12 @@ CodeAnalysisRunner class >> corpusTextFromFileNamed: aFileName [
 	file exists ifFalse: [
 		self error: 'Corpus file not found: ', file fullName ].
 	^ { file contents }
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> corpusWordsFromFileNamed: aFileName [
+
+	^ self wordsFromTextFile: self corporaDirectory / aFileName
 ]
 
 { #category : 'running' }
@@ -224,6 +252,19 @@ CodeAnalysisRunner class >> csvLineFrom: aCollection [
 ]
 
 { #category : 'accessing' }
+CodeAnalysisRunner class >> dataDirectory [
+
+	^ dataDirectory ifNil: [
+		self imageWorkingDirectory / 'data' ]
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> dataDirectory: aFileReference [ 
+
+	dataDirectory := aFileReference asFileReference
+]
+
+{ #category : 'accessing' }
 CodeAnalysisRunner class >> defaultPackages [
 	"By default analyze every package loaded in the current image."
 	^ self imagePackageNames
@@ -257,20 +298,34 @@ CodeAnalysisRunner class >> delimiterTokensOfMethod: aCompiledMethod [
 
 { #category : 'private' }
 CodeAnalysisRunner class >> englishWordSet [
-	| provider words |
-	provider := self globalNamedAnyOf: #('EnglishWords' 'EnglishDictionary' 'DictionaryWords' 'WordList').
-	provider ifNil: [ ^ nil ].
-	words := self wordsFromCorpusProvider: provider.
-	words ifNil: [ ^ nil ].
-	^ (words collect: [ :each | each asLowercase ]) asSet
+
+	| referenceWords |
+	referenceWords :=
+		self brownCorpusWords,
+		self gutenbergCorpusWords.
+
+	referenceWords := referenceWords select: [ :each |
+		each isString and: [ each isAllLetters ] ].
+
+	referenceWords isEmpty ifTrue: [
+		self error:
+			'No English reference words found in ',
+			self corporaDirectory fullName,
+			'. Expected brown.txt and gutenberg.txt.' ].
+
+	^ (referenceWords collect: [ :each | each asLowercase ]) asSet
 ]
 
 { #category : 'private' }
 CodeAnalysisRunner class >> englishWordsFrom: aCollectionOfWords [
+
 	| dictionary |
 	dictionary := self englishWordSet.
-	dictionary ifNil: [ ^ aCollectionOfWords ].
-	^ aCollectionOfWords select: [ :each | dictionary includes: each asLowercase ]
+
+	^ aCollectionOfWords select: [ :each |
+		each isString
+			and: [ each isAllLetters
+			and: [ dictionary includes: each asLowercase ] ] ]
 ]
 
 { #category : 'running' }
@@ -305,6 +360,24 @@ CodeAnalysisRunner class >> familyPackageCountsForSelectedPackages [
 			at: family
 			put: (counts at: family ifAbsent: [ 0 ]) + 1 ].
 	^ counts
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> filesInDataDirectoryMatchingAnyOf: nameParts [
+
+	| directory loweredParts |
+	directory := self dataDirectory.
+	directory exists ifFalse: [
+		self error: 'Data directory does not exist: ', directory fullName ].
+
+	loweredParts := nameParts collect: [ :each | each asLowercase ].
+
+	^ directory allChildren select: [ :file |
+		| fileName |
+		file isFile and: [
+			fileName := file basename asLowercase.
+			loweredParts anySatisfy: [ :part |
+				fileName includesSubstring: part ] ] ]
 ]
 
 { #category : 'private' }
@@ -2075,6 +2148,18 @@ CodeAnalysisRunner class >> wordsFromCorpusValue: anObject [
 ]
 
 { #category : 'private' }
+CodeAnalysisRunner class >> wordsFromDataFilesMatchingAnyOf: nameParts [
+
+	| files |
+	files := self filesInDataDirectoryMatchingAnyOf: nameParts.
+
+	files isEmpty ifTrue: [ ^ #() ].
+
+	^ files flatCollect: [ :file |
+		self wordsFromTextFile: file ]
+]
+
+{ #category : 'private' }
 CodeAnalysisRunner class >> wordsFromString: aString [
 	| sanitized |
 	sanitized := String streamContents: [ :stream |
@@ -2083,6 +2168,15 @@ CodeAnalysisRunner class >> wordsFromString: aString [
 				ifTrue: [ stream nextPut: character asLowercase ]
 				ifFalse: [ stream nextPut: Character space ] ] ].
 	^ (sanitized substrings: ' ') reject: [ :each | each isEmpty ]
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> wordsFromTextFile: aFileReference [
+
+	aFileReference exists ifFalse: [
+		self error: 'Missing text file: ', aFileReference fullName ].
+
+	^ self wordsFromString: aFileReference contents
 ]
 
 { #category : 'saving' }
