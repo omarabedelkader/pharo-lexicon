@@ -34,7 +34,9 @@ CodeAnalysisRunnerTest >> testTexFileName [
 	self assert: CodeAnalysisRunner wordCountsTexFileName equals: 'word_counts.tex'.
 	self assert: CodeAnalysisRunner tokensPerMethodTexFileName equals: 'all_tokens_per_method.tex'.
 	self assert: CodeAnalysisRunner top10PackagesByTheNumberOfClassesTexFileName equals: 'top_10_packages_by_class_count.tex'.
-	self assert: CodeAnalysisRunner top10ClassesByTheNumberOfMethodsTexFileName equals: 'top_10_classes_by_method_count.tex'
+	self assert: CodeAnalysisRunner top10ClassesByTheNumberOfMethodsTexFileName equals: 'top_10_classes_by_method_count.tex'.
+	self assert: CodeAnalysisRunner top10MethodsByLOCTexFileName equals: 'top_10_methods_by_loc.tex'.
+	self assert: CodeAnalysisRunner top10MethodsByTokenTexFileName equals: 'top_10_methods_by_token_count.tex'
 ]
 
 { #category : 'tests' }
@@ -97,6 +99,44 @@ CodeAnalysisRunnerTest >> testLatexTableForTop10ClassesByTheNumberOfMethods [
 	"Check order: P2 should come before P1"
 	self assert: (latex indexOfSubstring: 'Class2') < (latex indexOfSubstring: 'Class1').
 	self assert: (latex indexOfSubstring: 'Class1') < (latex indexOfSubstring: 'Class3')
+]
+
+{ #category : 'tests' }
+CodeAnalysisRunnerTest >> testLatexTableForTop10MethodsByLOC [
+	| data latex |
+	data := {
+		Dictionary newFrom: { #package -> 'Pkg1'. #class -> 'Class1'. #method -> 'M1'. #loc -> 10 }.
+		Dictionary newFrom: { #package -> 'Pkg2'. #class -> 'Class2'. #method -> 'M2'. #loc -> 20 }.
+		Dictionary newFrom: { #package -> 'Pkg3'. #class -> 'Class3'. #method -> 'M3'. #loc -> 5 }
+	}.
+
+	latex := CodeAnalysisRunner latexTableForTop10MethodsByLOC: data.
+
+	self assert: (latex includesSubstring: '\bfseries Package & \bfseries Class & \bfseries Method & \bfseries LOC').
+	self assert: (latex includesSubstring: 'Pkg2 & Class2 & M2 & 20').
+	self assert: (latex includesSubstring: 'Pkg1 & Class1 & M1 & 10').
+	self assert: (latex includesSubstring: 'Pkg3 & Class3 & M3 & 5').
+	self assert: (latex indexOfSubstring: 'M2') < (latex indexOfSubstring: 'M1').
+	self assert: (latex indexOfSubstring: 'M1') < (latex indexOfSubstring: 'M3')
+]
+
+{ #category : 'tests' }
+CodeAnalysisRunnerTest >> testLatexTableForTop10MethodsByToken [
+	| data latex |
+	data := {
+		Dictionary newFrom: { #package -> 'Pkg1'. #class -> 'Class1'. #method -> 'M1'. #tokens -> 100 }.
+		Dictionary newFrom: { #package -> 'Pkg2'. #class -> 'Class2'. #method -> 'M2'. #tokens -> 200 }.
+		Dictionary newFrom: { #package -> 'Pkg3'. #class -> 'Class3'. #method -> 'M3'. #tokens -> 50 }
+	}.
+
+	latex := CodeAnalysisRunner latexTableForTop10MethodsByToken: data.
+
+	self assert: (latex includesSubstring: '\bfseries Package & \bfseries Class & \bfseries Method & \bfseries \# of tokens').
+	self assert: (latex includesSubstring: 'Pkg2 & Class2 & M2 & 200').
+	self assert: (latex includesSubstring: 'Pkg1 & Class1 & M1 & 100').
+	self assert: (latex includesSubstring: 'Pkg3 & Class3 & M3 & 50').
+	self assert: (latex indexOfSubstring: 'M2') < (latex indexOfSubstring: 'M1').
+	self assert: (latex indexOfSubstring: 'M1') < (latex indexOfSubstring: 'M3')
 ]
 
 { #category : 'tests' }

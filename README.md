@@ -44,6 +44,12 @@ CodeAnalysisRunner top10PackagesByTheNumberOfClasses.
 CodeAnalysisRunner top10ClassesByTheNumberOfMethods.
 "writes top_10_classes_by_method_count.tex"
 
+CodeAnalysisRunner top10MethodsByLOC.
+"writes top_10_methods_by_loc.tex"
+
+CodeAnalysisRunner top10MethodsByToken.
+"writes top_10_methods_by_token_count.tex"
+
 CodeAnalysisRunner pharoIdentifierNamesDistribution.
 "writes pharo_identifier_names_distribution.tex"
 

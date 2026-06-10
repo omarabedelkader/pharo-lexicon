@@ -95,6 +95,30 @@ CodeAnalysisRunner class >> top10classesbythenumberofmethods [
 	^ self top10ClassesByTheNumberOfMethods
 ]
 
+{ #category : 'running' }
+CodeAnalysisRunner class >> top10MethodsByLOC [
+	^ self
+		saveReportNamed: self top10MethodsByLOCTexFileName
+		generatedBy: [ self latexTableForTop10MethodsByLOC ]
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> top10methodsbyloc [
+	^ self top10MethodsByLOC
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> top10MethodsByToken [
+	^ self
+		saveReportNamed: self top10MethodsByTokenTexFileName
+		generatedBy: [ self latexTableForTop10MethodsByToken ]
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> top10methodsbytoken [
+	^ self top10MethodsByToken
+]
+
 { #category : 'private' }
 CodeAnalysisRunner class >> allWordsInCorpus: aCollection [
 	^ aCollection flatCollect: [ :each | self wordsFromCorpusValue: each ]
@@ -277,6 +301,16 @@ CodeAnalysisRunner class >> top10PackagesByTheNumberOfClassesTexFileName [
 { #category : 'accessing' }
 CodeAnalysisRunner class >> top10ClassesByTheNumberOfMethodsTexFileName [
 	^ 'top_10_classes_by_method_count.tex'
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> top10MethodsByLOCTexFileName [
+	^ 'top_10_methods_by_loc.tex'
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> top10MethodsByTokenTexFileName [
+	^ 'top_10_methods_by_token_count.tex'
 ]
 
 { #category : 'running' }
@@ -961,6 +995,98 @@ CodeAnalysisRunner class >> latexTableForTop10ClassesByTheNumberOfMethods: data 
 				nextPutAll: (self latexEscape: (each at: #class));
 				nextPutAll: ' & ';
 				nextPutAll: (self formatTableCount: (each at: #methods));
+				nextPutAll: ' \\';
+				cr ].
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\end{tabular}'
+	]
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> latexTableForTop10MethodsByLOC [
+	| methods data |
+	methods := self methodsInSelectedPackages.
+	data := methods collect: [ :each |
+		Dictionary newFrom: {
+			#package -> (each methodClass package name).
+			#class -> each methodClass name.
+			#method -> each name.
+			#loc -> each linesOfCode
+		}
+	].
+	^ self latexTableForTop10MethodsByLOC: data
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> latexTableForTop10MethodsByLOC: data [
+	| sortedData |
+	sortedData := data asSortedCollection: [ :a :b |
+		(a at: #loc) > (b at: #loc) or: [
+			(a at: #loc) = (b at: #loc) and: [ (a at: #method) < (b at: #method) ]
+		]
+	].
+	sortedData := sortedData first: (10 min: sortedData size).
+
+	^ String streamContents: [ :stream |
+		stream nextPutAll: '\begin{tabular}{lllr}'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\bfseries Package & \bfseries Class & \bfseries Method & \bfseries LOC \\'; cr.
+		stream nextPutAll: '\hline'; cr.
+		sortedData do: [ :each |
+			stream
+				nextPutAll: (self latexEscape: (each at: #package));
+				nextPutAll: ' & ';
+				nextPutAll: (self latexEscape: (each at: #class));
+				nextPutAll: ' & ';
+				nextPutAll: (self latexEscape: (each at: #method));
+				nextPutAll: ' & ';
+				nextPutAll: (self formatTableCount: (each at: #loc));
+				nextPutAll: ' \\';
+				cr ].
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\end{tabular}'
+	]
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> latexTableForTop10MethodsByToken [
+	| methods data |
+	methods := self methodsInSelectedPackages.
+	data := methods collect: [ :each |
+		Dictionary newFrom: {
+			#package -> (each methodClass package name).
+			#class -> each methodClass name.
+			#method -> each name.
+			#tokens -> (self tokenCountOfMethod: each)
+		}
+	].
+	^ self latexTableForTop10MethodsByToken: data
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> latexTableForTop10MethodsByToken: data [
+	| sortedData |
+	sortedData := data asSortedCollection: [ :a :b |
+		(a at: #tokens) > (b at: #tokens) or: [
+			(a at: #tokens) = (b at: #tokens) and: [ (a at: #method) < (b at: #method) ]
+		]
+	].
+	sortedData := sortedData first: (10 min: sortedData size).
+
+	^ String streamContents: [ :stream |
+		stream nextPutAll: '\begin{tabular}{lllr}'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\bfseries Package & \bfseries Class & \bfseries Method & \bfseries \# of tokens \\'; cr.
+		stream nextPutAll: '\hline'; cr.
+		sortedData do: [ :each |
+			stream
+				nextPutAll: (self latexEscape: (each at: #package));
+				nextPutAll: ' & ';
+				nextPutAll: (self latexEscape: (each at: #class));
+				nextPutAll: ' & ';
+				nextPutAll: (self latexEscape: (each at: #method));
+				nextPutAll: ' & ';
+				nextPutAll: (self formatTableCount: (each at: #tokens));
 				nextPutAll: ' \\';
 				cr ].
 		stream nextPutAll: '\hline'; cr.
