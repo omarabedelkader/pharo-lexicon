@@ -3,7 +3,10 @@ Class {
 	#superclass : 'Object',
 	#instVars : [
 		'methods',
-		'name'
+		'name',
+		'rInt',
+		'rExt',
+		'rhoInt'
 	],
 	#category : 'WWCodeAnalysis-Models',
 	#package : 'WWCodeAnalysis',
@@ -15,6 +18,36 @@ PackageModel >> initialize [
 	super initialize.
 	methods := #()
 ]
+
+{ #category : 'accessing' }
+PackageModel >> rExt [
+	^ rExt
+]
+
+{ #category : 'accessing' }
+PackageModel >> rExt: anObject [
+	rExt := anObject
+]
+
+{ #category : 'accessing' }
+PackageModel >> rInt [
+	^ rInt
+]
+
+{ #category : 'accessing' }
+PackageModel >> rInt: anObject [
+	rInt := anObject
+]
+
+{ #category : 'accessing' }
+PackageModel >> rhoInt [
+	^ rhoInt
+]
+
+{ #category : 'accessing' }
+PackageModel >> rhoInt: anObject [
+	rhoInt := anObject
+}
 
 { #category : 'accessing' }
 PackageModel >> methods [

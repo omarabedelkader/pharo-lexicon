@@ -126,6 +126,8 @@ DataCollector >> methodCsvHeaders [
 		'words'
 		'allWords'
 		'isTestClass'
+		'rInt'
+		'rExt'
 	)
 ]
 
@@ -151,7 +153,9 @@ DataCollector >> methodRowsFrom: aCollectionOfProjectModels [
 					'subtokens' -> (self collectionAsString: methodModel subtokens).
 					'words' -> (self collectionAsString: methodModel words).
 					'allWords' -> (self collectionAsString: methodModel allWords).
-					'isTestClass' -> methodModel isTestClass }) ] ] ].
+					'isTestClass' -> methodModel isTestClass.
+					'rInt' -> methodModel rInt.
+					'rExt' -> methodModel rExt }) ] ] ].
 
 	^ rows asArray
 ]
@@ -167,6 +171,9 @@ DataCollector >> packageCsvHeaders [
 		'projectName'
 		'packageName'
 		'methodCount'
+		'rInt'
+		'rExt'
+		'rhoInt'
 	)
 ]
 
@@ -180,7 +187,10 @@ DataCollector >> packageRowsFrom: aCollectionOfProjectModels [
 			rows add: (Dictionary newFrom: {
 				'projectName' -> projectModel name.
 				'packageName' -> packageModel name.
-				'methodCount' -> (self methodsIn: packageModel) size }) ] ].
+				'methodCount' -> (self methodsIn: packageModel) size.
+				'rInt' -> packageModel rInt.
+				'rExt' -> packageModel rExt.
+				'rhoInt' -> packageModel rhoInt }) ] ].
 
 	^ rows asArray
 ]
@@ -196,6 +206,9 @@ DataCollector >> projectCsvHeaders [
 		'projectName'
 		'prefixes'
 		'packageCount'
+		'rInt'
+		'rExt'
+		'rhoInt'
 	)
 ]
 
@@ -215,7 +228,10 @@ DataCollector >> projectRowsFrom: aCollectionOfProjectModels [
 		Dictionary newFrom: {
 			'projectName' -> projectModel name.
 			'prefixes' -> (self collectionAsString: projectModel prefixes).
-			'packageCount' -> (self packagesIn: projectModel) size } ]
+			'packageCount' -> (self packagesIn: projectModel) size.
+			'rInt' -> projectModel rInt.
+			'rExt' -> projectModel rExt.
+			'rhoInt' -> projectModel rhoInt } ]
 ]
 
 { #category : 'configuration' }

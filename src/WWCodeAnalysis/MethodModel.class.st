@@ -13,12 +13,34 @@ Class {
 		'subtokens',
 		'words',
 		'allWords',
-		'isTestClass'
+		'isTestClass',
+		'rInt',
+		'rExt'
 	],
 	#category : 'WWCodeAnalysis-Models',
 	#package : 'WWCodeAnalysis',
 	#tag : 'Models'
 }
+
+{ #category : 'accessing' }
+MethodModel >> rExt [
+	^ rExt
+]
+
+{ #category : 'accessing' }
+MethodModel >> rExt: anObject [
+	rExt := anObject
+]
+
+{ #category : 'accessing' }
+MethodModel >> rInt [
+	^ rInt
+]
+
+{ #category : 'accessing' }
+MethodModel >> rInt: anObject [
+	rInt := anObject
+]
 
 { #category : 'accessing' }
 MethodModel >> allWords [

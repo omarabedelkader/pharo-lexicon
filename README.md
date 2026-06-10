@@ -65,6 +65,10 @@ CodeAnalysisRunner wordcounts.
 CodeAnalysisRunner testtable.
 "writes test_table.tex"
 
+CodeAnalysisRunner listpackages.
+
+CodeAnalysisRunner listpackagestest.
+
 ```
 
 Then render the actual figure with:
