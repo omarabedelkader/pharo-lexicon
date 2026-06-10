@@ -454,16 +454,13 @@ CodeAnalysisRunner class >> globalVariableWordsInSelectedPackages [
 
 { #category : 'private' }
 CodeAnalysisRunner class >> globalVariableWordsOfMethod: aCompiledMethod [
-	| parseTree words |
-	parseTree := aCompiledMethod codeAnalysisParseTree.
-	(parseTree respondsTo: #nodesDo:) ifFalse: [ ^ #() ].
+	| globalNames |
+	globalNames := (aCompiledMethod tokens collect: [ :each | each asString ])
+		select: [ :each |
+			each isAllLetters
+				and: [ Smalltalk globals includesKey: each asSymbol ] ].
 
-	words := OrderedCollection new.
-	parseTree nodesDo: [ :node |
-		(self isGlobalVariableNode: node) ifTrue: [
-			(node respondsTo: #name) ifTrue: [
-				words addAll: (self identifierWordsFromName: node name) ] ] ].
-	^ words asArray
+	^ self identifierWordsFromNames: globalNames
 ]
 
 { #category : 'private' }
@@ -473,9 +470,13 @@ CodeAnalysisRunner class >> gutenbergCorpusWords [
 
 { #category : 'private' }
 CodeAnalysisRunner class >> identifierWordsFromName: aString [
-	^ (aString splitIdentifierName
-		select: [ :each | each isAllLetters ])
-		collect: [ :each | each asLowercase ]
+	| string |
+	aString ifNil: [ ^ #() ].
+	string := aString asString.
+
+	^ (string splitIdentifierName
+		select: [ :each | each asString isAllLetters ])
+		collect: [ :each | each asString asLowercase ]
 ]
 
 { #category : 'private' }
@@ -521,8 +522,8 @@ CodeAnalysisRunner class >> isDelimiterToken: aString [
 ]
 
 { #category : 'private' }
-CodeAnalysisRunner class >> isGlobalVariableNode: aNode [
-	| className globalName globalValue isGlobalNode |
+CodeAnalysisRunner class >> isGlobalVariableNode: aNode [ 
+	| className globalName isGlobalNode |
 	className := aNode class name asString.
 
 	isGlobalNode :=
@@ -535,12 +536,8 @@ CodeAnalysisRunner class >> isGlobalVariableNode: aNode [
 	(aNode respondsTo: #name) ifFalse: [ ^ false ].
 
 	globalName := aNode name asSymbol.
-	(Smalltalk globals includesKey: globalName) ifFalse: [ ^ false ].
+	^ Smalltalk globals includesKey: globalName
 
-	globalValue := Smalltalk globals at: globalName.
-
-	"Do not count classes here; classes already have their own row."
-	^ globalValue isClass not
 ]
 
 { #category : 'private' }
@@ -1414,8 +1411,8 @@ CodeAnalysisRunner class >> literalEntriesOfMethod: aCompiledMethod [
 { #category : 'private' }
 CodeAnalysisRunner class >> literalTypeFor: anObject [
 	anObject isNumber ifTrue: [ ^ 'Numbers' ].
-	anObject isString ifTrue: [ ^ 'Strings' ].
 	anObject isSymbol ifTrue: [ ^ 'Symbols' ].
+	anObject isString ifTrue: [ ^ 'Strings' ].
 	anObject isCharacter ifTrue: [ ^ 'Characters' ].
 	^ nil
 ]
@@ -1547,15 +1544,16 @@ CodeAnalysisRunner class >> percentile: aFraction ofSorted: aSortedCollection [
 
 { #category : 'private' }
 CodeAnalysisRunner class >> pharoIdentifierNameEntries [
+
 	^ OrderedCollection new
-		add: 'Method names' -> self methodNameWordsInSelectedPackages;
-		add: 'Temporary variable names' -> self temporaryVariableWordsInSelectedPackages;
-		add: 'Argument names' -> self argumentWordsInSelectedPackages;
-		add: 'Instance variable names' -> self instanceVariableWordsInSelectedPackages;
-		add: 'Class names' -> self classNameWordsInSelectedPackages;
-		add: 'Class variable names' -> self classVariableWordsInSelectedPackages;
-		add: 'Global variable names' -> self globalVariableWordsInSelectedPackages;
-		yourself
+		  add: 'Method names' -> self methodNameWordsInSelectedPackages;
+		  add: 'Temporary variable names' -> self temporaryVariableWordsInSelectedPackages;
+		  add: 'Argument names' -> self argumentWordsInSelectedPackages;
+		  add: 'Instance variable names' -> self instanceVariableWordsInSelectedPackages;
+		  add: 'Class names' -> self classNameWordsInSelectedPackages;
+		  add: 'Class variable names' -> self classVariableWordsInSelectedPackages;
+		  add: 'Global names' -> self globalVariableWordsInSelectedPackages;
+		  yourself
 ]
 
 { #category : 'running' }
