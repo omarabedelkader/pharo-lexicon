@@ -69,6 +69,17 @@ CodeAnalysisRunner pharoLiteralDistribution.
 CodeAnalysisRunner pharoTokenTypeDistribution.
 "writes pharo_token_type_distribution.tex"
 
+
+CodeAnalysisRunner dataDirectory: '~/Documents/Pharo/images/pharo-image-directory/data' asFileReference.
+	
+CodeAnalysisRunner dataDirectory exists.
+
+CodeAnalysisRunner englishWordSet size.
+
+CodeAnalysisRunner corporaDirectory fullName.
+
+CodeAnalysisRunner wordcounts.
+
 CodeAnalysisRunner wordcounts.
 "writes word_counts.tex"
 
