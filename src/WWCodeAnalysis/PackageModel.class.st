@@ -61,7 +61,7 @@ PackageModel >> rhoInt [
 { #category : 'accessing' }
 PackageModel >> rhoInt: anObject [
 	rhoInt := anObject
-}
+]
 
 { #category : 'initialization' }
 PackageModel >> initialize [
