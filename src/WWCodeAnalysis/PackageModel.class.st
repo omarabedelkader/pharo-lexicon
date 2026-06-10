@@ -13,10 +13,24 @@ Class {
 	#tag : 'Models'
 }
 
-{ #category : 'initialization' }
-PackageModel >> initialize [
-	super initialize.
-	methods := #()
+{ #category : 'accessing' }
+PackageModel >> methods [
+	^ methods
+]
+
+{ #category : 'accessing' }
+PackageModel >> methods: anObject [
+	methods := anObject
+]
+
+{ #category : 'accessing' }
+PackageModel >> name [
+	^ name
+]
+
+{ #category : 'accessing' }
+PackageModel >> name: anObject [
+	name := anObject
 ]
 
 { #category : 'accessing' }
@@ -49,22 +63,11 @@ PackageModel >> rhoInt: anObject [
 	rhoInt := anObject
 }
 
-{ #category : 'accessing' }
-PackageModel >> methods [
-	^ methods
-]
-
-{ #category : 'accessing' }
-PackageModel >> methods: anObject [
-	methods := anObject
-]
-
-{ #category : 'accessing' }
-PackageModel >> name [
-	^ name
-]
-
-{ #category : 'accessing' }
-PackageModel >> name: anObject [
-	name := anObject
+{ #category : 'initialization' }
+PackageModel >> initialize [
+	super initialize.
+	methods := #().
+	rInt := 0.
+	rExt := 0.
+	rhoInt := 0.0
 ]

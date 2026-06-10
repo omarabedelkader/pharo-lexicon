@@ -14,11 +14,34 @@ Class {
 	#tag : 'Models'
 }
 
-{ #category : 'initialization' }
-ProjectModel >> initialize [
-	super initialize.
-	packages := #().
-	prefixes := #()
+{ #category : 'accessing' }
+ProjectModel >> name [
+	^ name
+]
+
+{ #category : 'accessing' }
+ProjectModel >> name: anObject [
+	name := anObject
+]
+
+{ #category : 'accessing' }
+ProjectModel >> packages [
+	^ packages
+]
+
+{ #category : 'accessing' }
+ProjectModel >> packages: anObject [
+	packages := anObject
+]
+
+{ #category : 'accessing' }
+ProjectModel >> prefixes [
+	^ prefixes
+]
+
+{ #category : 'accessing' }
+ProjectModel >> prefixes: anObject [
+	prefixes := anObject
 ]
 
 { #category : 'accessing' }
@@ -51,32 +74,12 @@ ProjectModel >> rhoInt: anObject [
 	rhoInt := anObject
 }
 
-{ #category : 'accessing' }
-ProjectModel >> name [
-	^ name
-]
-
-{ #category : 'accessing' }
-ProjectModel >> name: anObject [
-	name := anObject
-]
-
-{ #category : 'accessing' }
-ProjectModel >> packages [
-	^ packages
-]
-
-{ #category : 'accessing' }
-ProjectModel >> packages: anObject [
-	packages := anObject
-]
-
-{ #category : 'accessing' }
-ProjectModel >> prefixes [
-	^ prefixes
-]
-
-{ #category : 'accessing' }
-ProjectModel >> prefixes: anObject [
-	prefixes := anObject
+{ #category : 'initialization' }
+ProjectModel >> initialize [
+	super initialize.
+	packages := #().
+	prefixes := #().
+	rInt := 0.
+	rExt := 0.
+	rhoInt := 0.0
 ]

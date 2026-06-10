@@ -16,6 +16,16 @@ If you want to restrict the run to a subset, set `CodeAnalysisRunner packageName
 Each command writes a `.tex` file to the same directory as the running Pharo image by default.
 You can change that with `CodeAnalysisRunner outputDirectory: aFileReference`.
 
+### Package Reference Metrics
+
+The analyzer computes coupling metrics based on class references within methods:
+
+- **R_int**: Count of references to classes defined within the same project.
+- **R_ext**: Count of references to classes defined outside the project.
+- **rho_int**: The internal reference ratio: $R_{int} / (R_{int} + R_{ext})$.
+
+These metrics are automatically included in the CSV exports for projects, packages, and methods.
+
 Run the analyses with:
 
 ```smalltalk
@@ -66,8 +76,10 @@ CodeAnalysisRunner testtable.
 "writes test_table.tex"
 
 CodeAnalysisRunner listpackages.
+"writes list_table.tex"
 
 CodeAnalysisRunner listpackagestest.
+"writes list_test_table.tex"
 
 ```
 

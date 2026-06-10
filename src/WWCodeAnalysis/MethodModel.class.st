@@ -23,26 +23,6 @@ Class {
 }
 
 { #category : 'accessing' }
-MethodModel >> rExt [
-	^ rExt
-]
-
-{ #category : 'accessing' }
-MethodModel >> rExt: anObject [
-	rExt := anObject
-]
-
-{ #category : 'accessing' }
-MethodModel >> rInt [
-	^ rInt
-]
-
-{ #category : 'accessing' }
-MethodModel >> rInt: anObject [
-	rInt := anObject
-]
-
-{ #category : 'accessing' }
 MethodModel >> allWords [
 	^ allWords
 ]
@@ -60,17 +40,6 @@ MethodModel >> id [
 { #category : 'accessing' }
 MethodModel >> id: anObject [
 	id := anObject
-]
-
-{ #category : 'initialization' }
-MethodModel >> initialize [
-	super initialize.
-	tokens := #().
-	tokenTypes := #().
-	subtokens := #().
-	words := #().
-	allWords := #().
-	isTestClass := false
 ]
 
 { #category : 'accessing' }
@@ -124,6 +93,26 @@ MethodModel >> protocol: anObject [
 ]
 
 { #category : 'accessing' }
+MethodModel >> rExt [
+	^ rExt
+]
+
+{ #category : 'accessing' }
+MethodModel >> rExt: anObject [
+	rExt := anObject
+]
+
+{ #category : 'accessing' }
+MethodModel >> rInt [
+	^ rInt
+]
+
+{ #category : 'accessing' }
+MethodModel >> rInt: anObject [
+	rInt := anObject
+]
+
+{ #category : 'accessing' }
 MethodModel >> sourceCode [
 	^ sourceCode
 ]
@@ -171,4 +160,17 @@ MethodModel >> words [
 { #category : 'accessing' }
 MethodModel >> words: anObject [
 	words := anObject
+]
+
+{ #category : 'initialization' }
+MethodModel >> initialize [
+	super initialize.
+	tokens := #().
+	tokenTypes := #().
+	subtokens := #().
+	words := #().
+	allWords := #().
+	isTestClass := false.
+	rInt := 0.
+	rExt := 0
 ]
