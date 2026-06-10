@@ -77,8 +77,7 @@ CodeAnalysisRunnerTest >> testLatexFamilyVisualizationShowsTopHundredFamilies [
 	self assert: (latex includesSubstring: '100 & Family\_100 & 6').
 	self assert: (latex includesSubstring: '\multicolumn{8}{r}{Other 5 families} & 15').
 	self assert: (latex includesSubstring: '\bfseries 2,000').
-	self deny: (latex includesSubstring: 'Family\_101 &').
-	self assert: (latex indexOfSubstring: 'Pkg1') < (latex indexOfSubstring: 'Pkg3')
+	self deny: (latex includesSubstring: 'Family\_101 &')
 ]
 
 { #category : 'tests' }
@@ -105,17 +104,18 @@ CodeAnalysisRunnerTest >> testLatexTableForTop10ClassesByTheNumberOfMethods [
 CodeAnalysisRunnerTest >> testLatexTableForTop10MethodsByLOC [
 	| data latex |
 	data := {
-		Dictionary newFrom: { #package -> 'Pkg1'. #class -> 'Class1'. #method -> 'M1'. #loc -> 10 }.
-		Dictionary newFrom: { #package -> 'Pkg2'. #class -> 'Class2'. #method -> 'M2'. #loc -> 20 }.
-		Dictionary newFrom: { #package -> 'Pkg3'. #class -> 'Class3'. #method -> 'M3'. #loc -> 5 }
+		Dictionary newFrom: { #class -> 'Class1'. #method -> 'M1'. #loc -> 10 }.
+		Dictionary newFrom: { #class -> 'Class2'. #method -> 'M2'. #loc -> 20 }.
+		Dictionary newFrom: { #class -> 'Class3'. #method -> 'M3'. #loc -> 5 }
 	}.
 
 	latex := CodeAnalysisRunner latexTableForTop10MethodsByLOC: data.
 
-	self assert: (latex includesSubstring: '\bfseries Package & \bfseries Class & \bfseries Method & \bfseries LOC').
-	self assert: (latex includesSubstring: 'Pkg2 & Class2 & M2 & 20').
-	self assert: (latex includesSubstring: 'Pkg1 & Class1 & M1 & 10').
-	self assert: (latex includesSubstring: 'Pkg3 & Class3 & M3 & 5').
+	self assert: (latex includesSubstring: '\bfseries Class & \bfseries Method & \bfseries LOC').
+	self deny: (latex includesSubstring: 'Package').
+	self assert: (latex includesSubstring: 'Class2 & M2 & 20').
+	self assert: (latex includesSubstring: 'Class1 & M1 & 10').
+	self assert: (latex includesSubstring: 'Class3 & M3 & 5').
 	self assert: (latex indexOfSubstring: 'M2') < (latex indexOfSubstring: 'M1').
 	self assert: (latex indexOfSubstring: 'M1') < (latex indexOfSubstring: 'M3')
 ]
@@ -124,17 +124,18 @@ CodeAnalysisRunnerTest >> testLatexTableForTop10MethodsByLOC [
 CodeAnalysisRunnerTest >> testLatexTableForTop10MethodsByToken [
 	| data latex |
 	data := {
-		Dictionary newFrom: { #package -> 'Pkg1'. #class -> 'Class1'. #method -> 'M1'. #tokens -> 100 }.
-		Dictionary newFrom: { #package -> 'Pkg2'. #class -> 'Class2'. #method -> 'M2'. #tokens -> 200 }.
-		Dictionary newFrom: { #package -> 'Pkg3'. #class -> 'Class3'. #method -> 'M3'. #tokens -> 50 }
+		Dictionary newFrom: { #class -> 'Class1'. #method -> 'M1'. #tokens -> 100 }.
+		Dictionary newFrom: { #class -> 'Class2'. #method -> 'M2'. #tokens -> 200 }.
+		Dictionary newFrom: { #class -> 'Class3'. #method -> 'M3'. #tokens -> 50 }
 	}.
 
 	latex := CodeAnalysisRunner latexTableForTop10MethodsByToken: data.
 
-	self assert: (latex includesSubstring: '\bfseries Package & \bfseries Class & \bfseries Method & \bfseries \# of tokens').
-	self assert: (latex includesSubstring: 'Pkg2 & Class2 & M2 & 200').
-	self assert: (latex includesSubstring: 'Pkg1 & Class1 & M1 & 100').
-	self assert: (latex includesSubstring: 'Pkg3 & Class3 & M3 & 50').
+	self assert: (latex includesSubstring: '\bfseries Class & \bfseries Method & \bfseries \# of tokens').
+	self deny: (latex includesSubstring: 'Package').
+	self assert: (latex includesSubstring: 'Class2 & M2 & 200').
+	self assert: (latex includesSubstring: 'Class1 & M1 & 100').
+	self assert: (latex includesSubstring: 'Class3 & M3 & 50').
 	self assert: (latex indexOfSubstring: 'M2') < (latex indexOfSubstring: 'M1').
 	self assert: (latex indexOfSubstring: 'M1') < (latex indexOfSubstring: 'M3')
 ]

@@ -1007,10 +1007,13 @@ CodeAnalysisRunner class >> latexTableForTop10MethodsByLOC [
 	| methods data |
 	methods := self methodsInSelectedPackages.
 	data := methods collect: [ :each |
+		| methodName |
+		methodName := each name asString.
+		(methodName includesSubstring: '>>') ifTrue: [ methodName := methodName copyAfterLast: $> ].
+		(methodName beginsWith: '#') ifTrue: [ methodName := methodName allButFirst ].
 		Dictionary newFrom: {
-			#package -> (each methodClass package name).
 			#class -> each methodClass name.
-			#method -> each name.
+			#method -> methodName.
 			#loc -> each linesOfCode
 		}
 	].
@@ -1028,14 +1031,12 @@ CodeAnalysisRunner class >> latexTableForTop10MethodsByLOC: data [
 	sortedData := sortedData first: (10 min: sortedData size).
 
 	^ String streamContents: [ :stream |
-		stream nextPutAll: '\begin{tabular}{lllr}'; cr.
+		stream nextPutAll: '\begin{tabular}{llr}'; cr.
 		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: '\bfseries Package & \bfseries Class & \bfseries Method & \bfseries LOC \\'; cr.
+		stream nextPutAll: '\bfseries Class & \bfseries Method & \bfseries LOC \\'; cr.
 		stream nextPutAll: '\hline'; cr.
 		sortedData do: [ :each |
 			stream
-				nextPutAll: (self latexEscape: (each at: #package));
-				nextPutAll: ' & ';
 				nextPutAll: (self latexEscape: (each at: #class));
 				nextPutAll: ' & ';
 				nextPutAll: (self latexEscape: (each at: #method));
@@ -1053,10 +1054,13 @@ CodeAnalysisRunner class >> latexTableForTop10MethodsByToken [
 	| methods data |
 	methods := self methodsInSelectedPackages.
 	data := methods collect: [ :each |
+		| methodName |
+		methodName := each name asString.
+		(methodName includesSubstring: '>>') ifTrue: [ methodName := methodName copyAfterLast: $> ].
+		(methodName beginsWith: '#') ifTrue: [ methodName := methodName allButFirst ].
 		Dictionary newFrom: {
-			#package -> (each methodClass package name).
 			#class -> each methodClass name.
-			#method -> each name.
+			#method -> methodName.
 			#tokens -> (self tokenCountOfMethod: each)
 		}
 	].
@@ -1068,20 +1072,18 @@ CodeAnalysisRunner class >> latexTableForTop10MethodsByToken: data [
 	| sortedData |
 	sortedData := data asSortedCollection: [ :a :b |
 		(a at: #tokens) > (b at: #tokens) or: [
-			(a at: #tokens) = (b at: #tokens) and: [ (a at: #method) < (b at: #method) ]
+			(a at: #tokens) = (b at: #tokens) and: [ (a at: #class) < (b at: #class) ]
 		]
 	].
 	sortedData := sortedData first: (10 min: sortedData size).
 
 	^ String streamContents: [ :stream |
-		stream nextPutAll: '\begin{tabular}{lllr}'; cr.
+		stream nextPutAll: '\begin{tabular}{llr}'; cr.
 		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: '\bfseries Package & \bfseries Class & \bfseries Method & \bfseries \# of tokens \\'; cr.
+		stream nextPutAll: '\bfseries Class & \bfseries Method & \bfseries \# of tokens \\'; cr.
 		stream nextPutAll: '\hline'; cr.
 		sortedData do: [ :each |
 			stream
-				nextPutAll: (self latexEscape: (each at: #package));
-				nextPutAll: ' & ';
 				nextPutAll: (self latexEscape: (each at: #class));
 				nextPutAll: ' & ';
 				nextPutAll: (self latexEscape: (each at: #method));
