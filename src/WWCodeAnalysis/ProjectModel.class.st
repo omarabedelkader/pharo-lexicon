@@ -72,7 +72,7 @@ ProjectModel >> rhoInt [
 { #category : 'accessing' }
 ProjectModel >> rhoInt: anObject [
 	rhoInt := anObject
-}
+]
 
 { #category : 'initialization' }
 ProjectModel >> initialize [
