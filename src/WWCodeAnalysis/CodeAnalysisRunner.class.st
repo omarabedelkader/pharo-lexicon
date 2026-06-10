@@ -83,6 +83,18 @@ CodeAnalysisRunner class >> top10packagesbythenumberofclasses [
 	^ self top10PackagesByTheNumberOfClasses
 ]
 
+{ #category : 'running' }
+CodeAnalysisRunner class >> top10ClassesByTheNumberOfMethods [
+	^ self
+		saveReportNamed: self top10ClassesByTheNumberOfMethodsTexFileName
+		generatedBy: [ self latexTableForTop10ClassesByTheNumberOfMethods ]
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> top10classesbythenumberofmethods [
+	^ self top10ClassesByTheNumberOfMethods
+]
+
 { #category : 'private' }
 CodeAnalysisRunner class >> allWordsInCorpus: aCollection [
 	^ aCollection flatCollect: [ :each | self wordsFromCorpusValue: each ]
@@ -260,6 +272,11 @@ CodeAnalysisRunner class >> classesPerPackageTexFileName [
 { #category : 'accessing' }
 CodeAnalysisRunner class >> top10PackagesByTheNumberOfClassesTexFileName [
 	^ 'top_10_packages_by_class_count.tex'
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> top10ClassesByTheNumberOfMethodsTexFileName [
+	^ 'top_10_classes_by_method_count.tex'
 ]
 
 { #category : 'running' }
@@ -901,6 +918,49 @@ CodeAnalysisRunner class >> latexTableForTop10PackagesByTheNumberOfClasses: data
 				nextPutAll: (self latexEscape: (each at: #package));
 				nextPutAll: ' & ';
 				nextPutAll: (self formatTableCount: (each at: #classes));
+				nextPutAll: ' \\';
+				cr ].
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\end{tabular}'
+	]
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> latexTableForTop10ClassesByTheNumberOfMethods [
+	| classes data |
+	classes := self classesInSelectedPackages.
+	data := classes collect: [ :each |
+		Dictionary newFrom: {
+			#package -> (each package name).
+			#class -> each name.
+			#methods -> (self methodCountOfClass: each)
+		}
+	].
+	^ self latexTableForTop10ClassesByTheNumberOfMethods: data
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> latexTableForTop10ClassesByTheNumberOfMethods: data [
+	| sortedData |
+	sortedData := data asSortedCollection: [ :a :b |
+		(a at: #methods) > (b at: #methods) or: [
+			(a at: #methods) = (b at: #methods) and: [ (a at: #class) < (b at: #class) ]
+		]
+	].
+	sortedData := sortedData first: (10 min: sortedData size).
+
+	^ String streamContents: [ :stream |
+		stream nextPutAll: '\begin{tabular}{llr}'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\bfseries Package & \bfseries Class & \bfseries \# of methods \\'; cr.
+		stream nextPutAll: '\hline'; cr.
+		sortedData do: [ :each |
+			stream
+				nextPutAll: (self latexEscape: (each at: #package));
+				nextPutAll: ' & ';
+				nextPutAll: (self latexEscape: (each at: #class));
+				nextPutAll: ' & ';
+				nextPutAll: (self formatTableCount: (each at: #methods));
 				nextPutAll: ' \\';
 				cr ].
 		stream nextPutAll: '\hline'; cr.

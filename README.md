@@ -41,6 +41,9 @@ all BaselineOf packages form one Baseline family"
 CodeAnalysisRunner top10PackagesByTheNumberOfClasses.
 "writes top_10_packages_by_class_count.tex"
 
+CodeAnalysisRunner top10ClassesByTheNumberOfMethods.
+"writes top_10_classes_by_method_count.tex"
+
 CodeAnalysisRunner pharoIdentifierNamesDistribution.
 "writes pharo_identifier_names_distribution.tex"
 
