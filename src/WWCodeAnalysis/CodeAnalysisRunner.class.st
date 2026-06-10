@@ -850,52 +850,46 @@ CodeAnalysisRunner class >> latexTableForFamilies [
 
 { #category : 'private' }
 CodeAnalysisRunner class >> latexFamilyVisualizationForCounts: counts totalPackages: totalPackages [
-	| entries shownEntries omittedEntries omittedCount maximumCount splitIndex leftEntries rightEntries |
+	| entries shownEntries omittedEntries omittedCount groupSize group1 group2 group3 |
 	entries := counts associations asSortedCollection: [ :left :right |
 		left value = right value
 			ifTrue: [ left key < right key ]
 			ifFalse: [ left value > right value ] ].
-	shownEntries := entries first: (50 min: entries size).
+	shownEntries := entries first: (100 min: entries size).
 	omittedEntries := entries allButFirst: shownEntries size.
 	omittedCount := omittedEntries
 		inject: 0
 		into: [ :total :each | total + each value ].
-	splitIndex := (shownEntries size + 1) // 2.
-	leftEntries := shownEntries first: splitIndex.
-	rightEntries := shownEntries allButFirst: splitIndex.
-	maximumCount := shownEntries
-		ifEmpty: [ 1 ]
-		ifNotEmpty: [ shownEntries first value ].
+	groupSize := (shownEntries size + 2) // 3.
+	group1 := shownEntries copyFrom: 1 to: (groupSize min: shownEntries size).
+	group2 := shownEntries copyFrom: (groupSize + 1 min: shownEntries size + 1) to: (2 * groupSize min: shownEntries size).
+	group3 := shownEntries copyFrom: (2 * groupSize + 1 min: shownEntries size + 1) to: shownEntries size.
 
 	^ String streamContents: [ :stream |
 		stream nextPutAll: '\begingroup'; cr.
 		stream nextPutAll: '\scriptsize'; cr.
 		stream nextPutAll: '\setlength{\tabcolsep}{2pt}'; cr.
 		stream nextPutAll: '\renewcommand{\arraystretch}{0.85}'; cr.
-		stream nextPutAll: '\begin{tabular}{@{}rllr@{\qquad}rllr@{}}'; cr.
+		stream nextPutAll: '\begin{tabular}{@{}rlr@{\qquad}rlr@{\qquad}rlr@{}}'; cr.
 		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: '\bfseries Rank & \bfseries Family & \bfseries Packages & \bfseries Count & ';
-			nextPutAll: '\bfseries Rank & \bfseries Family & \bfseries Packages & \bfseries Count \\' ; cr.
+		stream nextPutAll: '\bfseries Rank & \bfseries Family & \bfseries Count & ';
+			nextPutAll: '\bfseries Rank & \bfseries Family & \bfseries Count & ';
+			nextPutAll: '\bfseries Rank & \bfseries Family & \bfseries Count \\' ; cr.
 		stream nextPutAll: '\hline'; cr.
-		leftEntries doWithIndex: [ :leftEntry :index |
-			self
-				writeLatexFamilyEntry: leftEntry
-				rank: index
-				maximumCount: maximumCount
-				on: stream.
+		group1 doWithIndex: [ :entry1 :index |
+			self writeLatexFamilyEntry: entry1 rank: index on: stream.
 			stream nextPutAll: ' & '.
-			index <= rightEntries size
-				ifTrue: [
-					self
-						writeLatexFamilyEntry: (rightEntries at: index)
-						rank: splitIndex + index
-						maximumCount: maximumCount
-						on: stream ]
-				ifFalse: [ stream nextPutAll: ' & & &' ].
+			index <= group2 size
+				ifTrue: [ self writeLatexFamilyEntry: (group2 at: index) rank: groupSize + index on: stream ]
+				ifFalse: [ stream nextPutAll: ' & & ' ].
+			stream nextPutAll: ' & '.
+			index <= group3 size
+				ifTrue: [ self writeLatexFamilyEntry: (group3 at: index) rank: 2 * groupSize + index on: stream ]
+				ifFalse: [ stream nextPutAll: ' & & ' ].
 			stream nextPutAll: ' \\'; cr ].
 		omittedEntries ifNotEmpty: [
 			stream
-				nextPutAll: '\multicolumn{7}{r}{Other ';
+				nextPutAll: '\multicolumn{8}{r}{Other ';
 				nextPutAll: omittedEntries size printString;
 				nextPutAll: ' families} & ';
 				nextPutAll: (self formatTableCount: omittedCount);
@@ -903,7 +897,7 @@ CodeAnalysisRunner class >> latexFamilyVisualizationForCounts: counts totalPacka
 				cr ].
 		stream nextPutAll: '\hline'; cr.
 		stream
-			nextPutAll: '\multicolumn{7}{r}{\bfseries Total} & \bfseries ';
+			nextPutAll: '\multicolumn{8}{r}{\bfseries Total} & \bfseries ';
 			nextPutAll: (self formatTableCount: totalPackages);
 			nextPutAll: ' \\';
 			cr.
@@ -914,14 +908,12 @@ CodeAnalysisRunner class >> latexFamilyVisualizationForCounts: counts totalPacka
 ]
 
 { #category : 'private' }
-CodeAnalysisRunner class >> writeLatexFamilyEntry: entry rank: rank maximumCount: maximumCount on: stream [
+CodeAnalysisRunner class >> writeLatexFamilyEntry: entry rank: rank on: stream [
 	stream
 		nextPutAll: rank printString;
 		nextPutAll: ' & ';
 		nextPutAll: (self latexEscape: entry key);
-		nextPutAll: ' & \rule{';
-		nextPutAll: (self formatMean: (entry value * 3.0 / maximumCount));
-		nextPutAll: 'em}{1.4ex} & ';
+		nextPutAll: ' & ';
 		nextPutAll: (self formatTableCount: entry value)
 ]
 
