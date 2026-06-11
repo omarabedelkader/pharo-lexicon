@@ -36,7 +36,48 @@ CodeAnalysisRunnerTest >> testTexFileName [
 	self assert: CodeAnalysisRunner top10PackagesByTheNumberOfClassesTexFileName equals: 'top_10_packages_by_class_count.tex'.
 	self assert: CodeAnalysisRunner top10ClassesByTheNumberOfMethodsTexFileName equals: 'top_10_classes_by_method_count.tex'.
 	self assert: CodeAnalysisRunner top10MethodsByLOCTexFileName equals: 'top_10_methods_by_loc.tex'.
-	self assert: CodeAnalysisRunner top10MethodsByTokenTexFileName equals: 'top_10_methods_by_token_count.tex'
+	self assert: CodeAnalysisRunner top10MethodsByTokenTexFileName equals: 'top_10_methods_by_token_count.tex'.
+	self assert: CodeAnalysisRunner listPackageMetricsTexFileName equals: 'list_package_metrics.tex'
+]
+
+{ #category : 'tests' }
+CodeAnalysisRunnerTest >> testLatexTableForPackageMetricsSummary [
+	| metrics latex |
+	metrics := {
+		Dictionary newFrom: { #name -> 'Pkg1'. #isTest -> false. #rInt -> 10. #rExt -> 5. #total -> 15 }.
+		Dictionary newFrom: { #name -> 'Pkg1-Tests'. #isTest -> true. #rInt -> 20. #rExt -> 10. #total -> 30 }
+	}.
+
+	latex := CodeAnalysisRunner latexTableForPackageMetricsSummary: metrics.
+
+	self assert: (latex includesSubstring: '\begin{tabular}{lrrrr}').
+	self assert: (latex includesSubstring: 'Package kind & Packages & Class-name references & Local references & External references').
+	self assert: (latex includesSubstring: 'Production packages & 1 & 15 & 10 & 5').
+	self assert: (latex includesSubstring: 'Test packages & 1 & 30 & 20 & 10').
+	self assert: (latex includesSubstring: 'All packages & 2 & 45 & 30 & 15')
+]
+
+{ #category : 'tests' }
+CodeAnalysisRunnerTest >> testLatexTableForTop10PackageMetrics [
+	| metrics latex |
+	metrics := {
+		Dictionary newFrom: { #name -> 'PkgA'. #rInt -> 100. #rExt -> 50. #total -> 150 }.
+		Dictionary newFrom: { #name -> 'PkgB'. #rInt -> 200. #rExt -> 20. #total -> 220 }.
+		Dictionary newFrom: { #name -> 'PkgC'. #rInt -> 10. #rExt -> 300. #total -> 310 }
+	}.
+
+	latex := CodeAnalysisRunner latexTableForTop10PackageMetrics: metrics.
+
+	self assert: (latex includesSubstring: '\begin{tabular}{r|rr|rr|rr}').
+	self assert: (latex includesSubstring: '& \multicolumn{2}{c|}{Class-name references} & \multicolumn{2}{c|}{Local references} & \multicolumn{2}{c}{External references}').
+	self assert: (latex includesSubstring: 'Rank & Package & \# & Package & \# & Package & \#').
+
+	"Rank 1 should be PkgC for total, PkgB for local, PkgC for external"
+	self assert: (latex includesSubstring: '1 & PkgC & 310 & PkgB & 200 & PkgC & 300').
+	"Rank 2 should be PkgB for total, PkgA for local, PkgA for external"
+	self assert: (latex includesSubstring: '2 & PkgB & 220 & PkgA & 100 & PkgA & 50').
+	"Rank 3 should be PkgA for total, PkgC for local, PkgB for external"
+	self assert: (latex includesSubstring: '3 & PkgA & 150 & PkgC & 10 & PkgB & 20')
 ]
 
 { #category : 'tests' }

@@ -1350,11 +1350,37 @@ CodeAnalysisRunner class >> listPackagesTexFileName [
 	^ 'list_table.tex'
 ]
 
+CodeAnalysisRunner class >> listPackageMetricsTexFileName [
+	^ 'list_package_metrics.tex'
+]
+
 { #category : 'running' }
 CodeAnalysisRunner class >> listpackages [
 	^ self
 		saveReportNamed: self listPackagesTexFileName
 		generatedBy: [ self latexTableForPackages ]
+]
+
+CodeAnalysisRunner class >> listpackagemetrics [
+	^ self
+		saveReportNamed: self listPackageMetricsTexFileName
+		generatedBy: [
+			String streamContents: [ :stream |
+				stream nextPutAll: '\begin{table}[!htbp]'; cr.
+				stream nextPutAll: '\centering'; cr.
+				stream nextPutAll: self latexTableForPackageMetricsSummary.
+				stream nextPutAll: '\caption{Local and external class-name references by package kind.}'; cr.
+				stream nextPutAll: '\label{tab:NameLocality}'; cr.
+				stream nextPutAll: '\end{table}'; cr; cr.
+
+				stream nextPutAll: '\begin{table}[!htbp]'; cr.
+				stream nextPutAll: '\centering'; cr.
+				stream nextPutAll: self latexTableForTop10PackageMetrics.
+				stream nextPutAll: '\caption{Top 10 packages by reference metrics.}'; cr.
+				stream nextPutAll: '\label{tab:Top10PackageMetrics}'; cr.
+				stream nextPutAll: '\end{table}'; cr
+			]
+		]
 ]
 
 { #category : 'running' }
@@ -1678,6 +1704,126 @@ CodeAnalysisRunner class >> projectMetrics [
 				#rhoInt -> referenceMetrics rhoInt }) ].
 
 	^ projects
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> packageMetrics [
+	| packages classes internalClasses metrics |
+	packages := self selectedPackages.
+	classes := packages flatCollect: [ :each | self classesOfPackage: each ].
+	internalClasses := classes asSet.
+
+	metrics := packages collect: [ :package |
+		| refMetrics |
+		refMetrics := PackageReferenceMetrics withInternalClasses: internalClasses.
+		refMetrics analyzePackage: package.
+		Dictionary newFrom: {
+			#name -> package name.
+			#isTest -> (self isTestPackage: package).
+			#rInt -> refMetrics rInt.
+			#rExt -> refMetrics rExt.
+			#total -> (refMetrics rInt + refMetrics rExt)
+		}
+	].
+	^ metrics
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> latexTableForPackageMetricsSummary [
+	^ self latexTableForPackageMetricsSummary: self packageMetrics
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> latexTableForPackageMetricsSummary: metrics [
+	| prod test all |
+	prod := metrics select: [ :m | (m at: #isTest) not ].
+	test := metrics select: [ :m | m at: #isTest ].
+	all := metrics.
+
+	^ String streamContents: [ :stream |
+		stream nextPutAll: '\begin{tabular}{lrrrr}'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: 'Package kind & Packages & Class-name references & Local references & External references \\'; cr.
+		stream nextPutAll: '\hline'; cr.
+
+		self writePackageSummaryRow: 'Production packages' metrics: prod on: stream.
+		self writePackageSummaryRow: 'Test packages' metrics: test on: stream.
+		self writePackageSummaryRow: 'All packages' metrics: all on: stream.
+
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\end{tabular}'; cr
+	]
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> writePackageSummaryRow: aLabel metrics: aCollection on: stream [
+	| count total rInt rExt |
+	count := aCollection size.
+	total := self sum: (aCollection collect: [ :m | m at: #total ]).
+	rInt := self sum: (aCollection collect: [ :m | m at: #rInt ]).
+	rExt := self sum: (aCollection collect: [ :m | m at: #rExt ]).
+
+	stream nextPutAll: aLabel; nextPutAll: ' & '.
+	stream nextPutAll: (self formatTableCount: count); nextPutAll: ' & '.
+	stream nextPutAll: (self formatTableCount: total); nextPutAll: ' & '.
+	stream nextPutAll: (self formatTableCount: rInt); nextPutAll: ' & '.
+	stream nextPutAll: (self formatTableCount: rExt); nextPutAll: ' \\'; cr
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> latexTableForTop10PackageMetrics [
+	| metrics topTotal topLocal topExternal |
+	metrics := self packageMetrics.
+
+	topTotal := metrics asSortedCollection: [ :a :b |
+		(a at: #total) > (b at: #total) or: [
+			(a at: #total) = (b at: #total) and: [ (a at: #name) < (b at: #name) ] ] ].
+	topTotal := topTotal first: (10 min: topTotal size).
+
+	topLocal := metrics asSortedCollection: [ :a :b |
+		(a at: #rInt) > (b at: #rInt) or: [
+			(a at: #rInt) = (b at: #rInt) and: [ (a at: #name) < (b at: #name) ] ] ].
+	topLocal := topLocal first: (10 min: topLocal size).
+
+	topExternal := metrics asSortedCollection: [ :a :b |
+		(a at: #rExt) > (b at: #rExt) or: [
+			(a at: #rExt) = (b at: #rExt) and: [ (a at: #name) < (b at: #name) ] ] ].
+	topExternal := topExternal first: (10 min: topExternal size).
+
+	^ String streamContents: [ :stream |
+		stream nextPutAll: '\begin{tabular}{r|rr|rr|rr}'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '& \multicolumn{2}{c|}{Class-name references} & \multicolumn{2}{c|}{Local references} & \multicolumn{2}{c}{External references} \\'; cr.
+		stream nextPutAll: 'Rank & Package & \# & Package & \# & Package & \# \\'; cr.
+		stream nextPutAll: '\hline'; cr.
+
+		1 to: 10 do: [ :rank |
+			| mTotal mLocal mExternal |
+			stream nextPutAll: rank printString; nextPutAll: ' & '.
+
+			mTotal := rank <= topTotal size ifTrue: [ topTotal at: rank ] ifFalse: [ nil ].
+			mTotal ifNotNil: [
+				stream nextPutAll: (self latexEscape: (mTotal at: #name)); nextPutAll: ' & '; nextPutAll: (self formatTableCount: (mTotal at: #total)) ]
+			ifNil: [ stream nextPutAll: ' & ' ].
+			stream nextPutAll: ' & '.
+
+			mLocal := rank <= topLocal size ifTrue: [ topLocal at: rank ] ifFalse: [ nil ].
+			mLocal ifNotNil: [
+				stream nextPutAll: (self latexEscape: (mLocal at: #name)); nextPutAll: ' & '; nextPutAll: (self formatTableCount: (mLocal at: #rInt)) ]
+			ifNil: [ stream nextPutAll: ' & ' ].
+			stream nextPutAll: ' & '.
+
+			mExternal := rank <= topExternal size ifTrue: [ topExternal at: rank ] ifFalse: [ nil ].
+			mExternal ifNotNil: [
+				stream nextPutAll: (self latexEscape: (mExternal at: #name)); nextPutAll: ' & '; nextPutAll: (self formatTableCount: (mExternal at: #rExt)) ]
+			ifNil: [ stream nextPutAll: ' & ' ].
+
+			stream nextPutAll: ' \\'; cr
+		].
+
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\end{tabular}'; cr
+	]
 ]
 
 { #category : 'running' }

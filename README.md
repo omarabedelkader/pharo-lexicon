@@ -92,6 +92,9 @@ CodeAnalysisRunner listpackages.
 CodeAnalysisRunner listpackagestest.
 "writes list_test_table.tex"
 
+CodeAnalysisRunner listpackagemetrics.
+"writes list_package_metrics.tex"
+
 ```
 
 Downlaod these projects:
