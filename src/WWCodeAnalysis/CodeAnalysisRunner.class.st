@@ -921,16 +921,20 @@ CodeAnalysisRunner class >> latexTableForFamilies [
 { #category : 'private' }
 CodeAnalysisRunner class >> latexTableForPackages [
 
-	| metrics |
-	metrics := self projectMetrics.
+	^ self latexTableForPackages: self projectMetrics
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> latexTableForPackages: metrics [
+
 	^ String streamContents: [ :stream |
-		stream nextPutAll: '\begin{longtable}{lrrrrrrr}'; cr.
+		stream nextPutAll: '\begin{longtable}{lrrrrrrrrr}'; cr.
 		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: '\bfseries Project & \bfseries Packages & \bfseries Classes & \bfseries Methods & \bfseries LOC & \bfseries $R_{\text{int}}$ & \bfseries $R_{\text{ext}}$ & \bfseries $\rho_{\text{int}}$ \\' ; cr.
+		stream nextPutAll: '\bfseries Project & \bfseries Packages & \bfseries Classes & \bfseries Test Classes & \bfseries Methods & \bfseries Test Methods & \bfseries LOC & \bfseries $R_{\text{int}}$ & \bfseries $R_{\text{ext}}$ & \bfseries $\rho_{\text{int}}$ \\' ; cr.
 		stream nextPutAll: '\hline'; cr.
 		stream nextPutAll: '\endfirsthead'; cr.
 		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: '\bfseries Project & \bfseries Packages & \bfseries Classes & \bfseries Methods & \bfseries LOC & \bfseries $R_{\text{int}}$ & \bfseries $R_{\text{ext}}$ & \bfseries $\rho_{\text{int}}$ \\' ; cr.
+		stream nextPutAll: '\bfseries Project & \bfseries Packages & \bfseries Classes & \bfseries Test Classes & \bfseries Methods & \bfseries Test Methods & \bfseries LOC & \bfseries $R_{\text{int}}$ & \bfseries $R_{\text{ext}}$ & \bfseries $\rho_{\text{int}}$ \\' ; cr.
 		stream nextPutAll: '\hline'; cr.
 		stream nextPutAll: '\endhead'; cr.
 		stream nextPutAll: '\hline'; cr.
@@ -943,7 +947,9 @@ CodeAnalysisRunner class >> latexTableForPackages [
 			stream nextPutAll: (self latexEscape: key); nextPutAll: ' & '.
 			stream nextPutAll: (self formatTableCount: (m at: #packages)); nextPutAll: ' & '.
 			stream nextPutAll: (self formatTableCount: (m at: #classes)); nextPutAll: ' & '.
+			stream nextPutAll: (self formatTableCount: (m at: #testClasses)); nextPutAll: ' & '.
 			stream nextPutAll: (self formatTableCount: (m at: #methods)); nextPutAll: ' & '.
+			stream nextPutAll: (self formatTableCount: (m at: #testMethods)); nextPutAll: ' & '.
 			stream nextPutAll: (self formatTableCount: (m at: #loc)); nextPutAll: ' & '.
 			stream nextPutAll: (self formatTableCount: (m at: #rInt)); nextPutAll: ' & '.
 			stream nextPutAll: (self formatTableCount: (m at: #rExt)); nextPutAll: ' & '.
@@ -1646,9 +1652,11 @@ CodeAnalysisRunner class >> projectMetrics [
 	projects := Dictionary new.
 
 	groupedProjects keysAndValuesDo: [ :projectName :packages |
-		| classes methods referenceMetrics internalClasses |
+		| classes methods referenceMetrics internalClasses testClasses testMethods |
 		classes := packages flatCollect: [ :package | self classesOfPackage: package ].
 		methods := packages flatCollect: [ :package | package methods ].
+		testClasses := classes select: [ :each | self isTestClass: each ].
+		testMethods := methods select: [ :each | self isTestMethod: each ].
 
 		internalClasses := classes asSet.
 		referenceMetrics := PackageReferenceMetrics withInternalClasses: internalClasses.
@@ -1661,7 +1669,9 @@ CodeAnalysisRunner class >> projectMetrics [
 			put: (Dictionary newFrom: {
 				#packages -> packages size.
 				#classes -> classes size.
+				#testClasses -> testClasses size.
 				#methods -> methods size.
+				#testMethods -> testMethods size.
 				#loc -> (self sum: (self linesOfCodeForMethods: methods)).
 				#rInt -> referenceMetrics rInt.
 				#rExt -> referenceMetrics rExt.

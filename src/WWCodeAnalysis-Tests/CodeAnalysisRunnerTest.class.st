@@ -101,6 +101,42 @@ CodeAnalysisRunnerTest >> testLatexTableForTop10ClassesByTheNumberOfMethods [
 ]
 
 { #category : 'tests' }
+CodeAnalysisRunnerTest >> testLatexTableForPackages [
+	| metrics latex |
+	metrics := Dictionary newFrom: {
+		'Project1' -> (Dictionary newFrom: {
+			#packages -> 2.
+			#classes -> 10.
+			#testClasses -> 3.
+			#methods -> 100.
+			#testMethods -> 25.
+			#loc -> 500.
+			#rInt -> 5.
+			#rExt -> 2.
+			#rhoInt -> 0.5 }).
+		'Project2' -> (Dictionary newFrom: {
+			#packages -> 1.
+			#classes -> 5.
+			#testClasses -> 1.
+			#methods -> 50.
+			#testMethods -> 10.
+			#loc -> 250.
+			#rInt -> 3.
+			#rExt -> 1.
+			#rhoInt -> 0.75 })
+	}.
+
+	latex := CodeAnalysisRunner latexTableForPackages: metrics.
+
+	self assert: (latex includesSubstring: '\begin{longtable}{lrrrrrrrrr}').
+	self assert: (latex includesSubstring: '\bfseries Project & \bfseries Packages & \bfseries Classes & \bfseries Test Classes & \bfseries Methods & \bfseries Test Methods & \bfseries LOC').
+	self assert: (latex includesSubstring: 'Project1 & 2 & 10 & 3 & 100 & 25 & 500 & 5 & 2 & 0.5').
+	self assert: (latex includesSubstring: 'Project2 & 1 & 5 & 1 & 50 & 10 & 250 & 3 & 1 & 0.75').
+	"Check alphabetical order"
+	self assert: (latex indexOfSubstring: 'Project1') < (latex indexOfSubstring: 'Project2')
+]
+
+{ #category : 'tests' }
 CodeAnalysisRunnerTest >> testLatexTableForTop10MethodsByLOC [
 	| data latex |
 	data := {
