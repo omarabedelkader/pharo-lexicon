@@ -8,7 +8,7 @@ Class {
 { #category : 'tests' }
 CodeAnalysisRunnerTest >> testCalculateStatisticsFor [
 	| stats |
-	stats := CodeAnalysisRunner calculateStatisticsFor: #(1 2 3 4).
+	stats := CodeAnalysisRunner statisticsForCounts: #(1 2 3 4).
 
 	self assert: (stats at: #count) equals: 4.
 	self assert: (stats at: #min) equals: 1.
@@ -58,26 +58,25 @@ CodeAnalysisRunnerTest >> testLatexTableForPackageMetricsSummary [
 ]
 
 { #category : 'tests' }
-CodeAnalysisRunnerTest >> testLatexTableForTop10PackageMetrics [
-	| metrics latex |
-	metrics := {
-		Dictionary newFrom: { #name -> 'PkgA'. #rInt -> 100. #rExt -> 50. #total -> 150 }.
-		Dictionary newFrom: { #name -> 'PkgB'. #rInt -> 200. #rExt -> 20. #total -> 220 }.
-		Dictionary newFrom: { #name -> 'PkgC'. #rInt -> 10. #rExt -> 300. #total -> 310 }
+CodeAnalysisRunnerTest >> testWriteTop10Table [
+	| metrics stream latex |
+	metrics := Dictionary newFrom: {
+		'ProjA' -> (Dictionary newFrom: { #rInt -> 100. #rExt -> 50 }).
+		'ProjB' -> (Dictionary newFrom: { #rInt -> 200. #rExt -> 20 }).
+		'ProjC' -> (Dictionary newFrom: { #rInt -> 10. #rExt -> 300 })
 	}.
+	
+	stream := WriteStream on: String new.
+	CodeAnalysisRunner writeTop10Table: metrics by: [ :m | (m at: #rInt) + (m at: #rExt) ] label: 'Class-name references' on: stream.
+	latex := stream contents.
 
-	latex := CodeAnalysisRunner latexTableForTop10PackageMetrics: metrics.
-
-	self assert: (latex includesSubstring: '\begin{tabular}{r|rr|rr|rr}').
-	self assert: (latex includesSubstring: '& \multicolumn{2}{c|}{Class-name references} & \multicolumn{2}{c|}{Local references} & \multicolumn{2}{c}{External references}').
-	self assert: (latex includesSubstring: 'Rank & Package & \# & Package & \# & Package & \#').
-
-	"Rank 1 should be PkgC for total, PkgB for local, PkgC for external"
-	self assert: (latex includesSubstring: '1 & PkgC & 310 & PkgB & 200 & PkgC & 300').
-	"Rank 2 should be PkgB for total, PkgA for local, PkgA for external"
-	self assert: (latex includesSubstring: '2 & PkgB & 220 & PkgA & 100 & PkgA & 50').
-	"Rank 3 should be PkgA for total, PkgC for local, PkgB for external"
-	self assert: (latex includesSubstring: '3 & PkgA & 150 & PkgC & 10 & PkgB & 20')
+	self assert: (latex includesSubstring: '\begin{table}[!htbp]').
+	self assert: (latex includesSubstring: 'Rank & Project & \# of Class-name references').
+	"ProjC should be rank 1 (310), ProjB rank 2 (220), ProjA rank 3 (150)"
+	self assert: (latex includesSubstring: '1 & ProjC & 310').
+	self assert: (latex includesSubstring: '2 & ProjB & 220').
+	self assert: (latex includesSubstring: '3 & ProjA & 150').
+	self assert: (latex includesSubstring: '\caption{Top 10 projects by Class-name references.}')
 ]
 
 { #category : 'tests' }
@@ -107,15 +106,14 @@ CodeAnalysisRunnerTest >> testLatexFamilyVisualizationShowsTopHundredFamilies [
 		latexFamilyVisualizationForCounts: counts
 		totalPackages: 2000.
 
-	self assert: (latex includesSubstring: '\bfseries Count & \bfseries Rank').
+	self assert: (latex includesSubstring: '\bfseries Rank & \bfseries Family & \bfseries Count').
 	self assert: (latex includesSubstring: '\scriptsize').
 	self assert: (latex includesSubstring: '\setlength{\tabcolsep}{2pt}').
 	self assert: (latex includesSubstring: '\renewcommand{\arraystretch}{0.85}').
-	self assert: (latex includesSubstring: '1 & Family\_1 & 105').
-	self deny: (latex includesSubstring: '\rule').
-	self assert: (latex includesSubstring: '35 & Family\_35 & 71').
-	self assert: (latex includesSubstring: '69 & Family\_69 & 37').
-	self assert: (latex includesSubstring: '100 & Family\_100 & 6').
+	self assert: (latex includesSubstring: '0 & Family\_1 & 105').
+	self assert: (latex includesSubstring: '34 & Family\_35 & 71').
+	self assert: (latex includesSubstring: '68 & Family\_69 & 37').
+	self assert: (latex includesSubstring: '99 & Family\_100 & 6').
 	self assert: (latex includesSubstring: '\multicolumn{8}{r}{Other 5 families} & 15').
 	self assert: (latex includesSubstring: '\bfseries 2,000').
 	self deny: (latex includesSubstring: 'Family\_101 &')
@@ -152,6 +150,7 @@ CodeAnalysisRunnerTest >> testLatexTableForPackages [
 			#methods -> 100.
 			#testMethods -> 25.
 			#loc -> 500.
+			#tokens -> 1000.
 			#rInt -> 5.
 			#rExt -> 2.
 			#rhoInt -> 0.5 }).
@@ -162,6 +161,7 @@ CodeAnalysisRunnerTest >> testLatexTableForPackages [
 			#methods -> 50.
 			#testMethods -> 10.
 			#loc -> 250.
+			#tokens -> 500.
 			#rInt -> 3.
 			#rExt -> 1.
 			#rhoInt -> 0.75 })
@@ -169,12 +169,34 @@ CodeAnalysisRunnerTest >> testLatexTableForPackages [
 
 	latex := CodeAnalysisRunner latexTableForPackages: metrics.
 
-	self assert: (latex includesSubstring: '\begin{longtable}{lrrrrrrrrr}').
-	self assert: (latex includesSubstring: '\bfseries Project & \bfseries Packages & \bfseries Classes & \bfseries Test Classes & \bfseries Methods & \bfseries Test Methods & \bfseries LOC').
-	self assert: (latex includesSubstring: 'Project1 & 2 & 10 & 3 & 100 & 25 & 500 & 5 & 2 & 0.5').
-	self assert: (latex includesSubstring: 'Project2 & 1 & 5 & 1 & 50 & 10 & 250 & 3 & 1 & 0.75').
+	self assert: (latex includesSubstring: '\begin{longtable}{lrrrrrrrrrr}').
+	self assert: (latex includesSubstring: '\bfseries Project & \bfseries Packages & \bfseries Classes & \bfseries Test Classes & \bfseries Methods & \bfseries Test Methods & \bfseries LOC & \bfseries Tokens & \bfseries $R_{\text{int}}$ & \bfseries $R_{\text{ext}}$ & \bfseries $\rho_{\text{int}}$').
+	self assert: (latex includesSubstring: 'Project1 & 2 & 10 & 3 & 100 & 25 & 500 & 1,000 & 5 & 2 & 0.5').
+	self assert: (latex includesSubstring: 'Project2 & 1 & 5 & 1 & 50 & 10 & 250 & 500 & 3 & 1 & 0.75').
 	"Check alphabetical order"
 	self assert: (latex indexOfSubstring: 'Project1') < (latex indexOfSubstring: 'Project2')
+]
+
+{ #category : 'tests' }
+CodeAnalysisRunnerTest >> testLatexTableForPackagesTest [
+	| metrics latex |
+	metrics := {
+		Dictionary newFrom: {
+			#name -> 'Pkg1'.
+			#classCount -> 10.
+			#methodCount -> 100.
+			#testClasses -> 2.
+			#testMethods -> 20.
+			#loc -> 500.
+			#tokens -> 1000.
+			#testPercentage -> '20%' }
+	}.
+
+	latex := CodeAnalysisRunner latexTableForPackagesTest: metrics.
+
+	self assert: (latex includesSubstring: '\begin{longtable}{lrrrrrrr}').
+	self assert: (latex includesSubstring: 'Test Package & \bfseries Classes & \bfseries Methods & \bfseries Test Classes & \bfseries Test Methods & \bfseries LOC & \bfseries Tokens & \bfseries Test \%').
+	self assert: (latex includesSubstring: 'Pkg1 & 10 & 100 & 2 & 20 & 500 & 1,000 & 20\%')
 ]
 
 { #category : 'tests' }

@@ -965,13 +965,13 @@ CodeAnalysisRunner class >> latexTableForPackagesTest [
 	| metrics |
 	metrics := self packageTestMetrics.
 	^ String streamContents: [ :stream |
-		stream nextPutAll: '\begin{longtable}{lrrrrr}'; cr.
+		stream nextPutAll: '\begin{longtable}{lrrrrrrr}'; cr.
 		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: 'Test Package & \bfseries Classes & \bfseries Methods & \bfseries Test Classes & \bfseries Test Methods & \bfseries Test \% \\' ; cr.
+		stream nextPutAll: 'Test Package & \bfseries Classes & \bfseries Methods & \bfseries Test Classes & \bfseries Test Methods & \bfseries LOC & \bfseries Tokens & \bfseries Test \% \\' ; cr.
 		stream nextPutAll: '\hline'; cr.
 		stream nextPutAll: '\endfirsthead'; cr.
 		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: 'Test Package & \bfseries Classes & \bfseries Methods & \bfseries Test Classes & \bfseries Test Methods & \bfseries Test \% \\' ; cr.
+		stream nextPutAll: 'Test Package & \bfseries Classes & \bfseries Methods & \bfseries Test Classes & \bfseries Test Methods & \bfseries LOC & \bfseries Tokens & \bfseries Test \% \\' ; cr.
 		stream nextPutAll: '\hline'; cr.
 		stream nextPutAll: '\endhead'; cr.
 		stream nextPutAll: '\hline'; cr.
@@ -985,6 +985,8 @@ CodeAnalysisRunner class >> latexTableForPackagesTest [
 			stream nextPutAll: (self formatTableCount: (m at: #methodCount)); nextPutAll: ' & '.
 			stream nextPutAll: (self formatTableCount: (m at: #testClasses)); nextPutAll: ' & '.
 			stream nextPutAll: (self formatTableCount: (m at: #testMethods)); nextPutAll: ' & '.
+			stream nextPutAll: (self formatTableCount: (m at: #loc)); nextPutAll: ' & '.
+			stream nextPutAll: (self formatTableCount: (m at: #tokens)); nextPutAll: ' & '.
 			stream nextPutAll: percentage; nextPutAll: ' \\'; cr ].
 		stream nextPutAll: '\end{longtable}'
 	]
@@ -1362,10 +1364,13 @@ CodeAnalysisRunner class >> listpackages [
 		generatedBy: [ self latexTableForPackages ]
 ]
 
+{ #category : 'running' }
 CodeAnalysisRunner class >> listpackagemetrics [
 	^ self
 		saveReportNamed: self listPackageMetricsTexFileName
 		generatedBy: [
+			| pMetrics |
+			pMetrics := self projectMetrics.
 			String streamContents: [ :stream |
 				stream nextPutAll: '\begin{table}[!htbp]'; cr.
 				stream nextPutAll: '\centering'; cr.
@@ -1374,14 +1379,35 @@ CodeAnalysisRunner class >> listpackagemetrics [
 				stream nextPutAll: '\label{tab:NameLocality}'; cr.
 				stream nextPutAll: '\end{table}'; cr; cr.
 
-				stream nextPutAll: '\begin{table}[!htbp]'; cr.
-				stream nextPutAll: '\centering'; cr.
-				stream nextPutAll: self latexTableForTop10PackageMetrics.
-				stream nextPutAll: '\caption{Top 10 packages by reference metrics.}'; cr.
-				stream nextPutAll: '\label{tab:Top10PackageMetrics}'; cr.
-				stream nextPutAll: '\end{table}'; cr
+				self writeTop10Table: pMetrics by: [ :m | (m at: #rInt) + (m at: #rExt) ] label: 'Class-name references' on: stream.
+				self writeTop10Table: pMetrics by: [ :m | m at: #rInt ] label: 'Local references' on: stream.
+				self writeTop10Table: pMetrics by: [ :m | m at: #rExt ] label: 'External references' on: stream.
 			]
 		]
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> writeTop10Table: metrics by: aBlock label: aLabel on: stream [
+	| sorted |
+	sorted := metrics associations asSortedCollection: [ :a :b |
+		(aBlock value: a value) > (aBlock value: b value) or: [
+			(aBlock value: a value) = (aBlock value: b value) and: [ a key < b key ] ] ].
+	sorted := sorted first: (10 min: sorted size).
+
+	stream nextPutAll: '\begin{table}[!htbp]'; cr.
+	stream nextPutAll: '\centering'; cr.
+	stream nextPutAll: '\begin{tabular}{rlr}'; cr.
+	stream nextPutAll: '\hline'; cr.
+	stream nextPutAll: 'Rank & Project & \# of '; nextPutAll: aLabel; nextPutAll: ' \\'; cr.
+	stream nextPutAll: '\hline'; cr.
+	sorted doWithIndex: [ :assoc :rank |
+		stream nextPutAll: rank printString; nextPutAll: ' & '.
+		stream nextPutAll: (self latexEscape: assoc key); nextPutAll: ' & '.
+		stream nextPutAll: (self formatTableCount: (aBlock value: assoc value)); nextPutAll: ' \\'; cr ].
+	stream nextPutAll: '\hline'; cr.
+	stream nextPutAll: '\end{tabular}'; cr.
+	stream nextPutAll: '\caption{Top 10 projects by '; nextPutAll: aLabel; nextPutAll: '.}'; cr.
+	stream nextPutAll: '\end{table}'; cr; cr
 ]
 
 { #category : 'running' }
@@ -1712,23 +1738,28 @@ CodeAnalysisRunner class >> projectMetrics [
 
 { #category : 'private' }
 CodeAnalysisRunner class >> packageMetrics [
-	| packages classes internalClasses metrics |
-	packages := self selectedPackages.
-	classes := packages flatCollect: [ :each | self classesOfPackage: each ].
-	internalClasses := classes asSet.
+	| groupedPackages metrics |
+	groupedPackages := Dictionary new.
+	self selectedPackages do: [ :package |
+		| family |
+		family := self familyNameForPackageName: package name.
+		(groupedPackages at: family ifAbsentPut: [ OrderedCollection new ]) add: package ].
 
-	metrics := packages collect: [ :package |
-		| refMetrics |
-		refMetrics := PackageReferenceMetrics withInternalClasses: internalClasses.
-		refMetrics analyzePackage: package.
-		Dictionary newFrom: {
-			#name -> package name.
-			#isTest -> (self isTestPackage: package).
-			#rInt -> refMetrics rInt.
-			#rExt -> refMetrics rExt.
-			#total -> (refMetrics rInt + refMetrics rExt)
-		}
-	].
+	metrics := OrderedCollection new.
+	groupedPackages keysAndValuesDo: [ :family :packages |
+		| internalClasses |
+		internalClasses := (packages flatCollect: [ :p | self classesOfPackage: p ]) asSet.
+		packages do: [ :package |
+			| refMetrics |
+			refMetrics := PackageReferenceMetrics withInternalClasses: internalClasses.
+			refMetrics analyzePackage: package.
+			metrics add: (Dictionary newFrom: {
+				#name -> package name.
+				#isTest -> (self isTestPackage: package).
+				#rInt -> refMetrics rInt.
+				#rExt -> refMetrics rExt.
+				#total -> (refMetrics rInt + refMetrics rExt)
+			}) ] ].
 	^ metrics
 ]
 
