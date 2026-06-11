@@ -928,13 +928,13 @@ CodeAnalysisRunner class >> latexTableForPackages [
 CodeAnalysisRunner class >> latexTableForPackages: metrics [
 
 	^ String streamContents: [ :stream |
-		stream nextPutAll: '\begin{longtable}{lrrrrrrrrr}'; cr.
+		stream nextPutAll: '\begin{longtable}{lrrrrrrrrrr}'; cr.
 		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: '\bfseries Project & \bfseries Packages & \bfseries Classes & \bfseries Test Classes & \bfseries Methods & \bfseries Test Methods & \bfseries LOC & \bfseries $R_{\text{int}}$ & \bfseries $R_{\text{ext}}$ & \bfseries $\rho_{\text{int}}$ \\' ; cr.
+		stream nextPutAll: '\bfseries Project & \bfseries Packages & \bfseries Classes & \bfseries Test Classes & \bfseries Methods & \bfseries Test Methods & \bfseries LOC & \bfseries Tokens & \bfseries $R_{\text{int}}$ & \bfseries $R_{\text{ext}}$ & \bfseries $\rho_{\text{int}}$ \\' ; cr.
 		stream nextPutAll: '\hline'; cr.
 		stream nextPutAll: '\endfirsthead'; cr.
 		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: '\bfseries Project & \bfseries Packages & \bfseries Classes & \bfseries Test Classes & \bfseries Methods & \bfseries Test Methods & \bfseries LOC & \bfseries $R_{\text{int}}$ & \bfseries $R_{\text{ext}}$ & \bfseries $\rho_{\text{int}}$ \\' ; cr.
+		stream nextPutAll: '\bfseries Project & \bfseries Packages & \bfseries Classes & \bfseries Test Classes & \bfseries Methods & \bfseries Test Methods & \bfseries LOC & \bfseries Tokens & \bfseries $R_{\text{int}}$ & \bfseries $R_{\text{ext}}$ & \bfseries $\rho_{\text{int}}$ \\' ; cr.
 		stream nextPutAll: '\hline'; cr.
 		stream nextPutAll: '\endhead'; cr.
 		stream nextPutAll: '\hline'; cr.
@@ -951,6 +951,7 @@ CodeAnalysisRunner class >> latexTableForPackages: metrics [
 			stream nextPutAll: (self formatTableCount: (m at: #methods)); nextPutAll: ' & '.
 			stream nextPutAll: (self formatTableCount: (m at: #testMethods)); nextPutAll: ' & '.
 			stream nextPutAll: (self formatTableCount: (m at: #loc)); nextPutAll: ' & '.
+			stream nextPutAll: (self formatTableCount: (m at: #tokens)); nextPutAll: ' & '.
 			stream nextPutAll: (self formatTableCount: (m at: #rInt)); nextPutAll: ' & '.
 			stream nextPutAll: (self formatTableCount: (m at: #rExt)); nextPutAll: ' & '.
 			stream nextPutAll: (self formatTableRatio: (m at: #rhoInt)); nextPutAll: ' \\'; cr ].
@@ -1552,6 +1553,8 @@ CodeAnalysisRunner class >> packageTestMetrics [
 			#methodCount -> methods size.
 			#testClasses -> testClasses size.
 			#testMethods -> testMethods size.
+			#loc -> (self sum: (self linesOfCodeForMethods: methods)).
+			#tokens -> (self sum: (self tokenCountsForMethods: methods)).
 			#testPercentage -> (self formatTablePercentage: testMethods size over: methods size)
 		})
 	].
@@ -1699,6 +1702,7 @@ CodeAnalysisRunner class >> projectMetrics [
 				#methods -> methods size.
 				#testMethods -> testMethods size.
 				#loc -> (self sum: (self linesOfCodeForMethods: methods)).
+				#tokens -> (self sum: (self tokenCountsForMethods: methods)).
 				#rInt -> referenceMetrics rInt.
 				#rExt -> referenceMetrics rExt.
 				#rhoInt -> referenceMetrics rhoInt }) ].
