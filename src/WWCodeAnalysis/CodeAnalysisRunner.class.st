@@ -1035,6 +1035,7 @@ CodeAnalysisRunner class >> literalEntriesFromValue: anObject [
 CodeAnalysisRunner class >> literalEntriesOfMethod: aCompiledMethod [
 	| parseTree literals |
 	parseTree := aCompiledMethod codeAnalysisParseTree.
+	(parseTree respondsTo: #nodesDo:) ifFalse: [ ^ #() ].
 	literals := OrderedCollection new.
 
 	parseTree nodesDo: [ :node |

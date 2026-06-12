@@ -2,7 +2,9 @@ Extension { #name : 'CompiledMethod' }
 
 { #category : '*WWCodeAnalysis' }
 CompiledMethod >> codeAnalysisParseTree [
-	^ OCParser parseMethod: self sourceCode 
+	^ [ OCParser parseMethod: self sourceCode ]
+		on: Error
+		do: [ nil ]
 ]
 
 { #category : '*WWCodeAnalysis' }
