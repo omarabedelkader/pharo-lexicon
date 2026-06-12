@@ -4,7 +4,10 @@ Class {
 	#instVars : [
 		'packages',
 		'prefixes',
-		'name'
+		'name',
+		'rInt',
+		'rExt',
+		'rhoInt'
 	],
 	#category : 'WWCodeAnalysis-Models',
 	#package : 'WWCodeAnalysis',
@@ -15,7 +18,10 @@ Class {
 ProjectModel >> initialize [
 	super initialize.
 	packages := #().
-	prefixes := #()
+	prefixes := #().
+	rInt := 0.
+	rExt := 0.
+	rhoInt := 0.0
 ]
 
 { #category : 'accessing' }
@@ -46,4 +52,34 @@ ProjectModel >> prefixes [
 { #category : 'accessing' }
 ProjectModel >> prefixes: anObject [
 	prefixes := anObject
+]
+
+{ #category : 'accessing' }
+ProjectModel >> rExt [
+	^ rExt
+]
+
+{ #category : 'accessing' }
+ProjectModel >> rExt: anObject [
+	rExt := anObject
+]
+
+{ #category : 'accessing' }
+ProjectModel >> rInt [
+	^ rInt
+]
+
+{ #category : 'accessing' }
+ProjectModel >> rInt: anObject [
+	rInt := anObject
+]
+
+{ #category : 'accessing' }
+ProjectModel >> rhoInt [
+	^ rhoInt
+]
+
+{ #category : 'accessing' }
+ProjectModel >> rhoInt: anObject [
+	rhoInt := anObject
 ]

@@ -3,7 +3,8 @@ Class {
 	#superclass : 'Object',
 	#classInstVars : [
 		'outputDirectory',
-		'packageNames'
+		'packageNames',
+		'dataDirectory'
 	],
 	#category : 'WWCodeAnalysis-Runners',
 	#package : 'WWCodeAnalysis',
@@ -109,7 +110,8 @@ CodeAnalysisRunner class >> boxplotditributionplot [
 
 { #category : 'private' }
 CodeAnalysisRunner class >> brownCorpusWords [
-	^ self wordsFromCorpusProviderNamedAnyOf: #('BrownCorpus' 'Brown' 'CorpusBrown')
+
+	^ self corpusWordsFromFileNamed: 'brown.txt'
 ]
 
 { #category : 'private' }
@@ -161,6 +163,49 @@ CodeAnalysisRunner class >> classesPerPackageTexFileName [
 	^ 'all_classes_per_package.tex'
 ]
 
+{ #category : 'private' }
+CodeAnalysisRunner class >> corporaDirectory [
+
+	| root |
+	root := self dataDirectory asFileReference.
+
+	root basename = 'corpora' ifTrue: [ ^ root ].
+
+	(root / 'corpora') exists ifTrue: [
+		^ root / 'corpora' ].
+
+	(root / 'data' / 'corpora') exists ifTrue: [
+		^ root / 'data' / 'corpora' ].
+
+	self error:
+		'No corpora directory found. Tried: ',
+		(root / 'corpora') fullName,
+		' and ',
+		(root / 'data' / 'corpora') fullName
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> corpusFileNamed: aFileName [
+
+	^ self imageWorkingDirectory / 'data' / 'corpora' / aFileName
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> corpusTextFromFileNamed: aFileName [
+
+	| file |
+	file := self corpusFileNamed: aFileName.
+	file exists ifFalse: [
+		self error: 'Corpus file not found: ', file fullName ].
+	^ { file contents }
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> corpusWordsFromFileNamed: aFileName [
+
+	^ self wordsFromTextFile: self corporaDirectory / aFileName
+]
+
 { #category : 'running' }
 CodeAnalysisRunner class >> counts [
 	^ self
@@ -207,6 +252,19 @@ CodeAnalysisRunner class >> csvLineFrom: aCollection [
 ]
 
 { #category : 'accessing' }
+CodeAnalysisRunner class >> dataDirectory [
+
+	^ dataDirectory ifNil: [
+		self imageWorkingDirectory / 'data' ]
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> dataDirectory: aFileReference [ 
+
+	dataDirectory := aFileReference asFileReference
+]
+
+{ #category : 'accessing' }
 CodeAnalysisRunner class >> defaultPackages [
 	"By default analyze every package loaded in the current image."
 	^ self imagePackageNames
@@ -240,20 +298,34 @@ CodeAnalysisRunner class >> delimiterTokensOfMethod: aCompiledMethod [
 
 { #category : 'private' }
 CodeAnalysisRunner class >> englishWordSet [
-	| provider words |
-	provider := self globalNamedAnyOf: #('EnglishWords' 'EnglishDictionary' 'DictionaryWords' 'WordList').
-	provider ifNil: [ ^ nil ].
-	words := self wordsFromCorpusProvider: provider.
-	words ifNil: [ ^ nil ].
-	^ (words collect: [ :each | each asLowercase ]) asSet
+
+	| referenceWords |
+	referenceWords :=
+		self brownCorpusWords,
+		self gutenbergCorpusWords.
+
+	referenceWords := referenceWords select: [ :each |
+		each isString and: [ each isAllLetters ] ].
+
+	referenceWords isEmpty ifTrue: [
+		self error:
+			'No English reference words found in ',
+			self corporaDirectory fullName,
+			'. Expected brown.txt and gutenberg.txt.' ].
+
+	^ (referenceWords collect: [ :each | each asLowercase ]) asSet
 ]
 
 { #category : 'private' }
 CodeAnalysisRunner class >> englishWordsFrom: aCollectionOfWords [
+
 	| dictionary |
 	dictionary := self englishWordSet.
-	dictionary ifNil: [ ^ aCollectionOfWords ].
-	^ aCollectionOfWords select: [ :each | dictionary includes: each asLowercase ]
+
+	^ aCollectionOfWords select: [ :each |
+		each isString
+			and: [ each isAllLetters
+			and: [ dictionary includes: each asLowercase ] ] ]
 ]
 
 { #category : 'running' }
@@ -288,6 +360,24 @@ CodeAnalysisRunner class >> familyPackageCountsForSelectedPackages [
 			at: family
 			put: (counts at: family ifAbsent: [ 0 ]) + 1 ].
 	^ counts
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> filesInDataDirectoryMatchingAnyOf: nameParts [
+
+	| directory loweredParts |
+	directory := self dataDirectory.
+	directory exists ifFalse: [
+		self error: 'Data directory does not exist: ', directory fullName ].
+
+	loweredParts := nameParts collect: [ :each | each asLowercase ].
+
+	^ directory allChildren select: [ :file |
+		| fileName |
+		file isFile and: [
+			fileName := file basename asLowercase.
+			loweredParts anySatisfy: [ :part |
+				fileName includesSubstring: part ] ] ]
 ]
 
 { #category : 'private' }
@@ -328,6 +418,14 @@ CodeAnalysisRunner class >> formatTablePercentage: aNumerator over: aDenominator
 ]
 
 { #category : 'private' }
+CodeAnalysisRunner class >> formatTableRatio: aNumber [
+
+	| rounded |
+	rounded := ((aNumber asFloat * 1000) rounded / 1000.0).
+	^ rounded printString
+]
+
+{ #category : 'private' }
 CodeAnalysisRunner class >> globalNamedAnyOf: aCollectionOfNames [
 	^ aCollectionOfNames
 		detect: [ :each | Smalltalk globals includesKey: each asSymbol ]
@@ -356,28 +454,29 @@ CodeAnalysisRunner class >> globalVariableWordsInSelectedPackages [
 
 { #category : 'private' }
 CodeAnalysisRunner class >> globalVariableWordsOfMethod: aCompiledMethod [
-	| parseTree words |
-	parseTree := aCompiledMethod codeAnalysisParseTree.
-	(parseTree respondsTo: #nodesDo:) ifFalse: [ ^ #() ].
+	| globalNames |
+	globalNames := (aCompiledMethod tokens collect: [ :each | each asString ])
+		select: [ :each |
+			each isAllLetters
+				and: [ Smalltalk globals includesKey: each asSymbol ] ].
 
-	words := OrderedCollection new.
-	parseTree nodesDo: [ :node |
-		(self isGlobalVariableNode: node) ifTrue: [
-			(node respondsTo: #name) ifTrue: [
-				words addAll: (self identifierWordsFromName: node name) ] ] ].
-	^ words asArray
+	^ self identifierWordsFromNames: globalNames
 ]
 
 { #category : 'private' }
 CodeAnalysisRunner class >> gutenbergCorpusWords [
-	^ self wordsFromCorpusProviderNamedAnyOf: #('GutenbergCorpus' 'Gutenberg' 'CorpusGutenberg')
+	^ self corpusTextFromFileNamed: 'gutenberg.txt'
 ]
 
 { #category : 'private' }
 CodeAnalysisRunner class >> identifierWordsFromName: aString [
-	^ (aString splitIdentifierName
-		select: [ :each | each isAllLetters ])
-		collect: [ :each | each asLowercase ]
+	| string |
+	aString ifNil: [ ^ #() ].
+	string := aString asString.
+
+	^ (string splitIdentifierName
+		select: [ :each | each asString isAllLetters ])
+		collect: [ :each | each asString asLowercase ]
 ]
 
 { #category : 'private' }
@@ -423,8 +522,8 @@ CodeAnalysisRunner class >> isDelimiterToken: aString [
 ]
 
 { #category : 'private' }
-CodeAnalysisRunner class >> isGlobalVariableNode: aNode [
-	| className globalName globalValue isGlobalNode |
+CodeAnalysisRunner class >> isGlobalVariableNode: aNode [ 
+	| className globalName isGlobalNode |
 	className := aNode class name asString.
 
 	isGlobalNode :=
@@ -437,12 +536,8 @@ CodeAnalysisRunner class >> isGlobalVariableNode: aNode [
 	(aNode respondsTo: #name) ifFalse: [ ^ false ].
 
 	globalName := aNode name asSymbol.
-	(Smalltalk globals includesKey: globalName) ifFalse: [ ^ false ].
+	^ Smalltalk globals includesKey: globalName
 
-	globalValue := Smalltalk globals at: globalName.
-
-	"Do not count classes here; classes already have their own row."
-	^ globalValue isClass not
 ]
 
 { #category : 'private' }
@@ -533,52 +628,46 @@ CodeAnalysisRunner class >> latexEscape: anObject [
 
 { #category : 'private' }
 CodeAnalysisRunner class >> latexFamilyVisualizationForCounts: counts totalPackages: totalPackages [
-	| entries shownEntries omittedEntries omittedCount maximumCount splitIndex leftEntries rightEntries |
+	| entries shownEntries omittedEntries omittedCount groupSize group1 group2 group3 |
 	entries := counts associations asSortedCollection: [ :left :right |
 		left value = right value
 			ifTrue: [ left key < right key ]
 			ifFalse: [ left value > right value ] ].
-	shownEntries := entries first: (50 min: entries size).
+	shownEntries := entries first: (100 min: entries size).
 	omittedEntries := entries allButFirst: shownEntries size.
 	omittedCount := omittedEntries
 		inject: 0
 		into: [ :total :each | total + each value ].
-	splitIndex := (shownEntries size + 1) // 2.
-	leftEntries := shownEntries first: splitIndex.
-	rightEntries := shownEntries allButFirst: splitIndex.
-	maximumCount := shownEntries
-		ifEmpty: [ 1 ]
-		ifNotEmpty: [ shownEntries first value ].
+	groupSize := (shownEntries size + 2) // 3.
+	group1 := shownEntries copyFrom: 1 to: (groupSize min: shownEntries size).
+	group2 := shownEntries copyFrom: (groupSize + 1 min: shownEntries size + 1) to: (2 * groupSize min: shownEntries size).
+	group3 := shownEntries copyFrom: (2 * groupSize + 1 min: shownEntries size + 1) to: shownEntries size.
 
 	^ String streamContents: [ :stream |
 		stream nextPutAll: '\begingroup'; cr.
 		stream nextPutAll: '\scriptsize'; cr.
 		stream nextPutAll: '\setlength{\tabcolsep}{2pt}'; cr.
 		stream nextPutAll: '\renewcommand{\arraystretch}{0.85}'; cr.
-		stream nextPutAll: '\begin{tabular}{@{}rllr@{\qquad}rllr@{}}'; cr.
+		stream nextPutAll: '\begin{tabular}{@{}rlr@{\qquad}rlr@{\qquad}rlr@{}}'; cr.
 		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: '\bfseries Rank & \bfseries Family & \bfseries Packages & \bfseries Count & ';
-			nextPutAll: '\bfseries Rank & \bfseries Family & \bfseries Packages & \bfseries Count \\' ; cr.
+		stream nextPutAll: '\bfseries Rank & \bfseries Family & \bfseries Count & ';
+			nextPutAll: '\bfseries Rank & \bfseries Family & \bfseries Count & ';
+			nextPutAll: '\bfseries Rank & \bfseries Family & \bfseries Count \\' ; cr.
 		stream nextPutAll: '\hline'; cr.
-		leftEntries doWithIndex: [ :leftEntry :index |
-			self
-				writeLatexFamilyEntry: leftEntry
-				rank: index
-				maximumCount: maximumCount
-				on: stream.
+		group1 doWithIndex: [ :entry1 :index |
+			self writeLatexFamilyEntry: entry1 rank: index on: stream.
 			stream nextPutAll: ' & '.
-			index <= rightEntries size
-				ifTrue: [
-					self
-						writeLatexFamilyEntry: (rightEntries at: index)
-						rank: splitIndex + index
-						maximumCount: maximumCount
-						on: stream ]
-				ifFalse: [ stream nextPutAll: ' & & &' ].
+			index <= group2 size
+				ifTrue: [ self writeLatexFamilyEntry: (group2 at: index) rank: groupSize + index on: stream ]
+				ifFalse: [ stream nextPutAll: ' & & ' ].
+			stream nextPutAll: ' & '.
+			index <= group3 size
+				ifTrue: [ self writeLatexFamilyEntry: (group3 at: index) rank: 2 * groupSize + index on: stream ]
+				ifFalse: [ stream nextPutAll: ' & & ' ].
 			stream nextPutAll: ' \\'; cr ].
 		omittedEntries ifNotEmpty: [
 			stream
-				nextPutAll: '\multicolumn{7}{r}{Other ';
+				nextPutAll: '\multicolumn{8}{r}{Other ';
 				nextPutAll: omittedEntries size printString;
 				nextPutAll: ' families} & ';
 				nextPutAll: (self formatTableCount: omittedCount);
@@ -586,7 +675,7 @@ CodeAnalysisRunner class >> latexFamilyVisualizationForCounts: counts totalPacka
 				cr ].
 		stream nextPutAll: '\hline'; cr.
 		stream
-			nextPutAll: '\multicolumn{7}{r}{\bfseries Total} & \bfseries ';
+			nextPutAll: '\multicolumn{8}{r}{\bfseries Total} & \bfseries ';
 			nextPutAll: (self formatTableCount: totalPackages);
 			nextPutAll: ' \\';
 			cr.
@@ -829,6 +918,107 @@ CodeAnalysisRunner class >> latexTableForFamilies [
 		totalPackages: self selectedPackages size
 ]
 
+{ #category : 'private' }
+CodeAnalysisRunner class >> latexTableForPackageMetricsSummary [
+	^ self latexTableForPackageMetricsSummary: self packageMetrics
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> latexTableForPackageMetricsSummary: metrics [
+	| prod test all |
+	prod := metrics select: [ :m | (m at: #isTest) not ].
+	test := metrics select: [ :m | m at: #isTest ].
+	all := metrics.
+
+	^ String streamContents: [ :stream |
+		stream nextPutAll: '\begin{tabular}{lrrrr}'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: 'Package kind & Packages & Class-name references & Local references & External references \\'; cr.
+		stream nextPutAll: '\hline'; cr.
+
+		self writePackageSummaryRow: 'Production packages' metrics: prod on: stream.
+		self writePackageSummaryRow: 'Test packages' metrics: test on: stream.
+		self writePackageSummaryRow: 'All packages' metrics: all on: stream.
+
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\end{tabular}'; cr
+	]
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> latexTableForPackages [
+
+	^ self latexTableForPackages: self projectMetrics
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> latexTableForPackages: metrics [
+
+	^ String streamContents: [ :stream |
+		stream nextPutAll: '\begin{longtable}{lrrrrrrrrrr}'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\bfseries Project & \bfseries Packages & \bfseries Classes & \bfseries Test Classes & \bfseries Methods & \bfseries Test Methods & \bfseries LOC & \bfseries Tokens & \bfseries $R_{\text{int}}$ & \bfseries $R_{\text{ext}}$ & \bfseries $\rho_{\text{int}}$ \\' ; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\endfirsthead'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\bfseries Project & \bfseries Packages & \bfseries Classes & \bfseries Test Classes & \bfseries Methods & \bfseries Test Methods & \bfseries LOC & \bfseries Tokens & \bfseries $R_{\text{int}}$ & \bfseries $R_{\text{ext}}$ & \bfseries $\rho_{\text{int}}$ \\' ; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\endhead'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\endfoot'; cr.
+		stream nextPutAll: '\endlastfoot'; cr.
+
+		metrics keys asSortedCollection do: [ :key |
+			| m |
+			m := metrics at: key.
+			stream nextPutAll: (self latexEscape: key); nextPutAll: ' & '.
+			stream nextPutAll: (self formatTableCount: (m at: #packages)); nextPutAll: ' & '.
+			stream nextPutAll: (self formatTableCount: (m at: #classes)); nextPutAll: ' & '.
+			stream nextPutAll: (self formatTableCount: (m at: #testClasses)); nextPutAll: ' & '.
+			stream nextPutAll: (self formatTableCount: (m at: #methods)); nextPutAll: ' & '.
+			stream nextPutAll: (self formatTableCount: (m at: #testMethods)); nextPutAll: ' & '.
+			stream nextPutAll: (self formatTableCount: (m at: #loc)); nextPutAll: ' & '.
+			stream nextPutAll: (self formatTableCount: (m at: #tokens)); nextPutAll: ' & '.
+			stream nextPutAll: (self formatTableCount: (m at: #rInt)); nextPutAll: ' & '.
+			stream nextPutAll: (self formatTableCount: (m at: #rExt)); nextPutAll: ' & '.
+			stream nextPutAll: (self formatTableRatio: (m at: #rhoInt)); nextPutAll: ' \\'; cr ].
+
+		stream nextPutAll: '\end{longtable}'
+	]
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> latexTableForPackagesTest [
+	| metrics |
+	metrics := self packageTestMetrics.
+	^ String streamContents: [ :stream |
+		stream nextPutAll: '\begin{longtable}{lrrrrrrr}'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: 'Test Package & \bfseries Classes & \bfseries Methods & \bfseries Test Classes & \bfseries Test Methods & \bfseries LOC & \bfseries Tokens & \bfseries Test \% \\' ; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\endfirsthead'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: 'Test Package & \bfseries Classes & \bfseries Methods & \bfseries Test Classes & \bfseries Test Methods & \bfseries LOC & \bfseries Tokens & \bfseries Test \% \\' ; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\endhead'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\endfoot'; cr.
+		stream nextPutAll: '\endlastfoot'; cr.
+		metrics do: [ :m |
+			| percentage |
+			percentage := (m at: #testPercentage) copyReplaceAll: '%' with: '\%'.
+			stream nextPutAll: (self latexEscape: (m at: #name)); nextPutAll: ' & '.
+			stream nextPutAll: (self formatTableCount: (m at: #classCount)); nextPutAll: ' & '.
+			stream nextPutAll: (self formatTableCount: (m at: #methodCount)); nextPutAll: ' & '.
+			stream nextPutAll: (self formatTableCount: (m at: #testClasses)); nextPutAll: ' & '.
+			stream nextPutAll: (self formatTableCount: (m at: #testMethods)); nextPutAll: ' & '.
+			stream nextPutAll: (self formatTableCount: (m at: #loc)); nextPutAll: ' & '.
+			stream nextPutAll: (self formatTableCount: (m at: #tokens)); nextPutAll: ' & '.
+			stream nextPutAll: percentage; nextPutAll: ' \\'; cr ].
+		stream nextPutAll: '\end{longtable}'
+	]
+]
+
 { #category : 'running' }
 CodeAnalysisRunner class >> latexTableForPharoIdentifierNamesDistribution [
 	| entries totalWords totalCharacters |
@@ -949,6 +1139,242 @@ CodeAnalysisRunner class >> latexTableForTestTable [
 ]
 
 { #category : 'running' }
+CodeAnalysisRunner class >> latexTableForTop10ClassesByTheNumberOfMethods [
+	| classes data |
+	classes := self classesInSelectedPackages.
+	data := classes collect: [ :each |
+		Dictionary newFrom: {
+			#package -> (each package name).
+			#class -> each name.
+			#methods -> (self methodCountOfClass: each)
+		}
+	].
+	^ self latexTableForTop10ClassesByTheNumberOfMethods: data
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> latexTableForTop10ClassesByTheNumberOfMethods: data [
+	| sortedData |
+	sortedData := data asSortedCollection: [ :a :b |
+		(a at: #methods) > (b at: #methods) or: [
+			(a at: #methods) = (b at: #methods) and: [ (a at: #class) < (b at: #class) ]
+		]
+	].
+	sortedData := sortedData first: (10 min: sortedData size).
+
+	^ String streamContents: [ :stream |
+		stream nextPutAll: '\begin{tabular}{llr}'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\bfseries Package & \bfseries Class & \bfseries \# of methods \\'; cr.
+		stream nextPutAll: '\hline'; cr.
+		sortedData do: [ :each |
+			stream
+				nextPutAll: (self latexEscape: (each at: #package));
+				nextPutAll: ' & ';
+				nextPutAll: (self latexEscape: (each at: #class));
+				nextPutAll: ' & ';
+				nextPutAll: (self formatTableCount: (each at: #methods));
+				nextPutAll: ' \\';
+				cr ].
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\end{tabular}'
+	]
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> latexTableForTop10MethodsByLOC [
+	| methods data |
+	methods := self methodsInSelectedPackages.
+	data := methods collect: [ :each |
+		| methodName |
+		methodName := each name asString.
+		(methodName includesSubstring: '>>') ifTrue: [ methodName := methodName copyAfterLast: $> ].
+		(methodName beginsWith: '#') ifTrue: [ methodName := methodName allButFirst ].
+		Dictionary newFrom: {
+			#class -> each methodClass name.
+			#method -> methodName.
+			#loc -> each linesOfCode
+		}
+	].
+	^ self latexTableForTop10MethodsByLOC: data
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> latexTableForTop10MethodsByLOC: data [
+	| sortedData |
+	sortedData := data asSortedCollection: [ :a :b |
+		(a at: #loc) > (b at: #loc) or: [
+			(a at: #loc) = (b at: #loc) and: [ (a at: #method) < (b at: #method) ]
+		]
+	].
+	sortedData := sortedData first: (10 min: sortedData size).
+
+	^ String streamContents: [ :stream |
+		stream nextPutAll: '\begin{tabular}{llr}'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\bfseries Class & \bfseries Method & \bfseries LOC \\'; cr.
+		stream nextPutAll: '\hline'; cr.
+		sortedData do: [ :each |
+			stream
+				nextPutAll: (self latexEscape: (each at: #class));
+				nextPutAll: ' & ';
+				nextPutAll: (self latexEscape: (each at: #method));
+				nextPutAll: ' & ';
+				nextPutAll: (self formatTableCount: (each at: #loc));
+				nextPutAll: ' \\';
+				cr ].
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\end{tabular}'
+	]
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> latexTableForTop10MethodsByToken [
+	| methods data |
+	methods := self methodsInSelectedPackages.
+	data := methods collect: [ :each |
+		| methodName |
+		methodName := each name asString.
+		(methodName includesSubstring: '>>') ifTrue: [ methodName := methodName copyAfterLast: $> ].
+		(methodName beginsWith: '#') ifTrue: [ methodName := methodName allButFirst ].
+		Dictionary newFrom: {
+			#class -> each methodClass name.
+			#method -> methodName.
+			#tokens -> (self tokenCountOfMethod: each)
+		}
+	].
+	^ self latexTableForTop10MethodsByToken: data
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> latexTableForTop10MethodsByToken: data [
+	| sortedData |
+	sortedData := data asSortedCollection: [ :a :b |
+		(a at: #tokens) > (b at: #tokens) or: [
+			(a at: #tokens) = (b at: #tokens) and: [ (a at: #class) < (b at: #class) ]
+		]
+	].
+	sortedData := sortedData first: (10 min: sortedData size).
+
+	^ String streamContents: [ :stream |
+		stream nextPutAll: '\begin{tabular}{llr}'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\bfseries Class & \bfseries Method & \bfseries \# of tokens \\'; cr.
+		stream nextPutAll: '\hline'; cr.
+		sortedData do: [ :each |
+			stream
+				nextPutAll: (self latexEscape: (each at: #class));
+				nextPutAll: ' & ';
+				nextPutAll: (self latexEscape: (each at: #method));
+				nextPutAll: ' & ';
+				nextPutAll: (self formatTableCount: (each at: #tokens));
+				nextPutAll: ' \\';
+				cr ].
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\end{tabular}'
+	]
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> latexTableForTop10PackageMetrics [
+	| metrics topTotal topLocal topExternal |
+	metrics := self packageMetrics.
+
+	topTotal := metrics asSortedCollection: [ :a :b |
+		(a at: #total) > (b at: #total) or: [
+			(a at: #total) = (b at: #total) and: [ (a at: #name) < (b at: #name) ] ] ].
+	topTotal := topTotal first: (10 min: topTotal size).
+
+	topLocal := metrics asSortedCollection: [ :a :b |
+		(a at: #rInt) > (b at: #rInt) or: [
+			(a at: #rInt) = (b at: #rInt) and: [ (a at: #name) < (b at: #name) ] ] ].
+	topLocal := topLocal first: (10 min: topLocal size).
+
+	topExternal := metrics asSortedCollection: [ :a :b |
+		(a at: #rExt) > (b at: #rExt) or: [
+			(a at: #rExt) = (b at: #rExt) and: [ (a at: #name) < (b at: #name) ] ] ].
+	topExternal := topExternal first: (10 min: topExternal size).
+
+	^ String streamContents: [ :stream |
+		stream nextPutAll: '\begin{tabular}{r|rr|rr|rr}'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '& \multicolumn{2}{c|}{Class-name references} & \multicolumn{2}{c|}{Local references} & \multicolumn{2}{c}{External references} \\'; cr.
+		stream nextPutAll: 'Rank & Package & \# & Package & \# & Package & \# \\'; cr.
+		stream nextPutAll: '\hline'; cr.
+
+		1 to: 10 do: [ :rank |
+			| mTotal mLocal mExternal |
+			stream nextPutAll: rank printString; nextPutAll: ' & '.
+
+			mTotal := rank <= topTotal size ifTrue: [ topTotal at: rank ] ifFalse: [ nil ].
+			mTotal ifNotNil: [
+				stream nextPutAll: (self latexEscape: (mTotal at: #name)); nextPutAll: ' & '; nextPutAll: (self formatTableCount: (mTotal at: #total)) ]
+			ifNil: [ stream nextPutAll: ' & ' ].
+			stream nextPutAll: ' & '.
+
+			mLocal := rank <= topLocal size ifTrue: [ topLocal at: rank ] ifFalse: [ nil ].
+			mLocal ifNotNil: [
+				stream nextPutAll: (self latexEscape: (mLocal at: #name)); nextPutAll: ' & '; nextPutAll: (self formatTableCount: (mLocal at: #rInt)) ]
+			ifNil: [ stream nextPutAll: ' & ' ].
+			stream nextPutAll: ' & '.
+
+			mExternal := rank <= topExternal size ifTrue: [ topExternal at: rank ] ifFalse: [ nil ].
+			mExternal ifNotNil: [
+				stream nextPutAll: (self latexEscape: (mExternal at: #name)); nextPutAll: ' & '; nextPutAll: (self formatTableCount: (mExternal at: #rExt)) ]
+			ifNil: [ stream nextPutAll: ' & ' ].
+
+			stream nextPutAll: ' \\'; cr
+		].
+
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\end{tabular}'; cr
+	]
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> latexTableForTop10PackagesByTheNumberOfClasses [
+	| packages data |
+	packages := self selectedPackages.
+	data := packages collect: [ :each |
+		Dictionary newFrom: {
+			#project -> (self familyNameForPackageName: each name).
+			#package -> each name.
+			#classes -> (self classCountOf: each)
+		}
+	].
+	^ self latexTableForTop10PackagesByTheNumberOfClasses: data
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> latexTableForTop10PackagesByTheNumberOfClasses: data [
+	| sortedData |
+	sortedData := data asSortedCollection: [ :a :b |
+		(a at: #classes) > (b at: #classes) or: [
+			(a at: #classes) = (b at: #classes) and: [ (a at: #package) < (b at: #package) ]
+		]
+	].
+	sortedData := sortedData first: (10 min: sortedData size).
+
+	^ String streamContents: [ :stream |
+		stream nextPutAll: '\begin{tabular}{llr}'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\bfseries Project & \bfseries Package & \bfseries \# of classes \\'; cr.
+		stream nextPutAll: '\hline'; cr.
+		sortedData do: [ :each |
+			stream
+				nextPutAll: (self latexEscape: (each at: #project));
+				nextPutAll: ' & ';
+				nextPutAll: (self latexEscape: (each at: #package));
+				nextPutAll: ' & ';
+				nextPutAll: (self formatTableCount: (each at: #classes));
+				nextPutAll: ' \\';
+				cr ].
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\end{tabular}'
+	]
+]
+
+{ #category : 'running' }
 CodeAnalysisRunner class >> latexTableForWordCounts [
 	| pharoCounts pharoStarCounts brownCounts gutenbergCounts |
 	pharoCounts := self wordStatisticsFor: self allIdentifierNameWordsInSelectedPackages.
@@ -998,6 +1424,57 @@ CodeAnalysisRunner class >> latexTotalRowForLiteralEntries: entries totalLiteral
 { #category : 'private' }
 CodeAnalysisRunner class >> linesOfCodeForMethods: aCollectionOfMethods [
 	^ aCollectionOfMethods collect: [ :each | each linesOfCode ]
+]
+
+{ #category : 'as yet unclassified' }
+CodeAnalysisRunner class >> listPackageMetricsTexFileName [
+	^ 'list_package_metrics.tex'
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> listPackagesTestTexFileName [
+	^ 'list_test_table.tex'
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> listPackagesTexFileName [
+	^ 'list_table.tex'
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> listpackagemetrics [
+	^ self
+		saveReportNamed: self listPackageMetricsTexFileName
+		generatedBy: [
+			| pMetrics |
+			pMetrics := self projectMetrics.
+			String streamContents: [ :stream |
+				stream nextPutAll: '\begin{table}[!htbp]'; cr.
+				stream nextPutAll: '\centering'; cr.
+				stream nextPutAll: self latexTableForPackageMetricsSummary.
+				stream nextPutAll: '\caption{Local and external class-name references by package kind.}'; cr.
+				stream nextPutAll: '\label{tab:NameLocality}'; cr.
+				stream nextPutAll: '\end{table}'; cr; cr.
+
+				self writeTop10Table: pMetrics by: [ :m | (m at: #rInt) + (m at: #rExt) ] label: 'Class-name references' on: stream.
+				self writeTop10Table: pMetrics by: [ :m | m at: #rInt ] label: 'Local references' on: stream.
+				self writeTop10Table: pMetrics by: [ :m | m at: #rExt ] label: 'External references' on: stream.
+			]
+		]
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> listpackages [
+	^ self
+		saveReportNamed: self listPackagesTexFileName
+		generatedBy: [ self latexTableForPackages ]
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> listpackagestest [
+	^ self
+		saveReportNamed: self listPackagesTestTexFileName
+		generatedBy: [ self latexTableForPackagesTest ]
 ]
 
 { #category : 'private' }
@@ -1142,6 +1619,33 @@ CodeAnalysisRunner class >> outputFileFor: aFileName [
 ]
 
 { #category : 'private' }
+CodeAnalysisRunner class >> packageMetrics [
+	| groupedPackages metrics |
+	groupedPackages := Dictionary new.
+	self selectedPackages do: [ :package |
+		| family |
+		family := self familyNameForPackageName: package name.
+		(groupedPackages at: family ifAbsentPut: [ OrderedCollection new ]) add: package ].
+
+	metrics := OrderedCollection new.
+	groupedPackages keysAndValuesDo: [ :family :packages |
+		| internalClasses |
+		internalClasses := (packages flatCollect: [ :p | self classesOfPackage: p ]) asSet.
+		packages do: [ :package |
+			| refMetrics |
+			refMetrics := PackageReferenceMetrics withInternalClasses: internalClasses.
+			refMetrics analyzePackage: package.
+			metrics add: (Dictionary newFrom: {
+				#name -> package name.
+				#isTest -> (self isTestPackage: package).
+				#rInt -> refMetrics rInt.
+				#rExt -> refMetrics rExt.
+				#total -> (refMetrics rInt + refMetrics rExt)
+			}) ] ].
+	^ metrics
+]
+
+{ #category : 'private' }
 CodeAnalysisRunner class >> packageNamed: aString [
 	^ Smalltalk image packages
 		detect: [ :each | each name = aString ]
@@ -1156,6 +1660,31 @@ CodeAnalysisRunner class >> packageNames [
 { #category : 'accessing' }
 CodeAnalysisRunner class >> packageNames: aCollection [
 	packageNames := aCollection asArray
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> packageTestMetrics [
+	| metrics |
+	metrics := OrderedCollection new.
+	self selectedPackages do: [ :package |
+		| classes methods testClasses testMethods |
+		classes := self classesOfPackage: package.
+		methods := package methods.
+		testClasses := classes select: [ :each | self isTestClass: each ].
+		testMethods := methods select: [ :each | self isTestMethod: each ].
+		
+		metrics add: (Dictionary newFrom: {
+			#name -> package name.
+			#classCount -> classes size.
+			#methodCount -> methods size.
+			#testClasses -> testClasses size.
+			#testMethods -> testMethods size.
+			#loc -> (self sum: (self linesOfCodeForMethods: methods)).
+			#tokens -> (self sum: (self tokenCountsForMethods: methods)).
+			#testPercentage -> (self formatTablePercentage: testMethods size over: methods size)
+		})
+	].
+	^ metrics
 ]
 
 { #category : 'private' }
@@ -1176,15 +1705,16 @@ CodeAnalysisRunner class >> percentile: aFraction ofSorted: aSortedCollection [
 
 { #category : 'private' }
 CodeAnalysisRunner class >> pharoIdentifierNameEntries [
+
 	^ OrderedCollection new
-		add: 'Method names' -> self methodNameWordsInSelectedPackages;
-		add: 'Temporary variable names' -> self temporaryVariableWordsInSelectedPackages;
-		add: 'Argument names' -> self argumentWordsInSelectedPackages;
-		add: 'Instance variable names' -> self instanceVariableWordsInSelectedPackages;
-		add: 'Class names' -> self classNameWordsInSelectedPackages;
-		add: 'Class variable names' -> self classVariableWordsInSelectedPackages;
-		add: 'Global variable names' -> self globalVariableWordsInSelectedPackages;
-		yourself
+		  add: 'Method names' -> self methodNameWordsInSelectedPackages;
+		  add: 'Temporary variable names' -> self temporaryVariableWordsInSelectedPackages;
+		  add: 'Argument names' -> self argumentWordsInSelectedPackages;
+		  add: 'Instance variable names' -> self instanceVariableWordsInSelectedPackages;
+		  add: 'Class names' -> self classNameWordsInSelectedPackages;
+		  add: 'Class variable names' -> self classVariableWordsInSelectedPackages;
+		  add: 'Global names' -> self globalVariableWordsInSelectedPackages;
+		  yourself
 ]
 
 { #category : 'running' }
@@ -1260,6 +1790,52 @@ CodeAnalysisRunner class >> pharoTokenTypeEntries [
 		yourself
 ]
 
+{ #category : 'private' }
+CodeAnalysisRunner class >> projectMetrics [
+
+	| groupedProjects projects |
+	groupedProjects := Dictionary new.
+
+	self selectedPackages do: [ :package |
+		| projectName |
+		projectName := self familyNameForPackageName: package name.
+		(groupedProjects
+			at: projectName
+			ifAbsentPut: [ OrderedCollection new ])
+				add: package ].
+
+	projects := Dictionary new.
+
+	groupedProjects keysAndValuesDo: [ :projectName :packages |
+		| classes methods referenceMetrics internalClasses testClasses testMethods |
+		classes := packages flatCollect: [ :package | self classesOfPackage: package ].
+		methods := packages flatCollect: [ :package | package methods ].
+		testClasses := classes select: [ :each | self isTestClass: each ].
+		testMethods := methods select: [ :each | self isTestMethod: each ].
+
+		internalClasses := classes asSet.
+		referenceMetrics := PackageReferenceMetrics withInternalClasses: internalClasses.
+
+		packages do: [ :package |
+			referenceMetrics analyzePackage: package ].
+
+		projects
+			at: projectName
+			put: (Dictionary newFrom: {
+				#packages -> packages size.
+				#classes -> classes size.
+				#testClasses -> testClasses size.
+				#methods -> methods size.
+				#testMethods -> testMethods size.
+				#loc -> (self sum: (self linesOfCodeForMethods: methods)).
+				#tokens -> (self sum: (self tokenCountsForMethods: methods)).
+				#rInt -> referenceMetrics rInt.
+				#rExt -> referenceMetrics rExt.
+				#rhoInt -> referenceMetrics rhoInt }) ].
+
+	^ projects
+]
+
 { #category : 'running' }
 CodeAnalysisRunner class >> saveDefaultPackagesAnalysisToTex [
 	^ self allClassesPerPackage
@@ -1304,33 +1880,90 @@ CodeAnalysisRunner class >> selectorWordsFromSelector: aString [
 
 { #category : 'private' }
 CodeAnalysisRunner class >> simpleStemFor: aString [
-	| word replacements |
-	word := aString asLowercase.
+
+	| word |
+	word := aString asString asLowercase.
 	word size <= 3 ifTrue: [ ^ word ].
 
-	replacements := {
-		'ization' -> 'ize'.
-		'ational' -> 'ate'.
-		'fulness' -> 'ful'.
-		'ousness' -> 'ous'.
-		'iveness' -> 'ive'.
-		'tional' -> 'tion'.
-		'ation' -> 'ate'.
-		'ingly' -> ''.
-		'edly' -> ''.
-		'izer' -> 'ize'.
-		'ing' -> ''.
-		'ied' -> 'y'.
-		'ies' -> 'y'.
-		'ed' -> '' }.
+	"Common English plural handling"
+	((word endsWith: 'sses') and: [ word size > 5 ])
+		ifTrue: [ ^ word copyFrom: 1 to: word size - 2 ].
 
-	replacements do: [ :each |
-		((word size > each key size + 2) and: [ word endsWith: each key ])
-			ifTrue: [ ^ (word copyFrom: 1 to: word size - each key size), each value ] ].
+	((word endsWith: 'ies') and: [ word size > 4 ])
+		ifTrue: [ ^ (word copyFrom: 1 to: word size - 3), 'y' ].
 
-	((word size > 4)
-		and: [ (word endsWith: 's') and: [ (word endsWith: 'ss') not ] ])
-			ifTrue: [ ^ word copyFrom: 1 to: word size - 1 ].
+	((word endsWith: 'ves') and: [ word size > 4 ])
+		ifTrue: [ ^ (word copyFrom: 1 to: word size - 3), 'f' ].
+
+	"Long derivational endings"
+	((word endsWith: 'ization') and: [ word size > 8 ])
+		ifTrue: [ ^ (word copyFrom: 1 to: word size - 7), 'ize' ].
+
+	((word endsWith: 'ational') and: [ word size > 8 ])
+		ifTrue: [ ^ (word copyFrom: 1 to: word size - 7), 'ate' ].
+
+	((word endsWith: 'fulness') and: [ word size > 8 ])
+		ifTrue: [ ^ (word copyFrom: 1 to: word size - 7), 'ful' ].
+
+	((word endsWith: 'ousness') and: [ word size > 8 ])
+		ifTrue: [ ^ (word copyFrom: 1 to: word size - 7), 'ous' ].
+
+	((word endsWith: 'iveness') and: [ word size > 8 ])
+		ifTrue: [ ^ (word copyFrom: 1 to: word size - 7), 'ive' ].
+
+	((word endsWith: 'tional') and: [ word size > 7 ])
+		ifTrue: [ ^ (word copyFrom: 1 to: word size - 6), 'tion' ].
+
+	((word endsWith: 'ation') and: [ word size > 6 ])
+		ifTrue: [ ^ (word copyFrom: 1 to: word size - 5), 'ate' ].
+
+	((word endsWith: 'izer') and: [ word size > 6 ])
+		ifTrue: [ ^ (word copyFrom: 1 to: word size - 4), 'ize' ].
+
+	"Verb/adverb endings"
+	((word endsWith: 'ingly') and: [ word size > 7 ])
+		ifTrue: [ ^ word copyFrom: 1 to: word size - 5 ].
+
+	((word endsWith: 'edly') and: [ word size > 6 ])
+		ifTrue: [ ^ word copyFrom: 1 to: word size - 4 ].
+
+	((word endsWith: 'ing') and: [ word size > 5 ])
+		ifTrue: [ ^ word copyFrom: 1 to: word size - 3 ].
+
+	((word endsWith: 'ied') and: [ word size > 4 ])
+		ifTrue: [ ^ (word copyFrom: 1 to: word size - 3), 'y' ].
+
+	((word endsWith: 'ed') and: [ word size > 4 ])
+		ifTrue: [ ^ word copyFrom: 1 to: word size - 2 ].
+
+	((word endsWith: 'ly') and: [ word size > 5 ])
+		ifTrue: [ ^ word copyFrom: 1 to: word size - 2 ].
+
+	"Nominal/adjectival endings"
+	((word endsWith: 'ment') and: [ word size > 6 ])
+		ifTrue: [ ^ word copyFrom: 1 to: word size - 4 ].
+
+	((word endsWith: 'ness') and: [ word size > 6 ])
+		ifTrue: [ ^ word copyFrom: 1 to: word size - 4 ].
+
+	((word endsWith: 'able') and: [ word size > 6 ])
+		ifTrue: [ ^ word copyFrom: 1 to: word size - 4 ].
+
+	((word endsWith: 'ible') and: [ word size > 6 ])
+		ifTrue: [ ^ word copyFrom: 1 to: word size - 4 ].
+
+	((word endsWith: 'er') and: [ word size > 5 ])
+		ifTrue: [ ^ word copyFrom: 1 to: word size - 2 ].
+
+	((word endsWith: 'est') and: [ word size > 5 ])
+		ifTrue: [ ^ word copyFrom: 1 to: word size - 3 ].
+
+	"Plain plural s"
+	((word endsWith: 's')
+		and: [
+			word size > 4
+				and: [ (word endsWith: 'ss') not ] ])
+		ifTrue: [ ^ word copyFrom: 1 to: word size - 1 ].
 
 	^ word
 ]
@@ -1422,8 +2055,9 @@ CodeAnalysisRunner class >> statisticsForCounts: counts [
 
 { #category : 'private' }
 CodeAnalysisRunner class >> stemFor: aString [
-	| porter stemmer word |
-	word := aString asLowercase.
+
+| porter stemmer word |
+	word := aString asString asLowercase.
 
 	porter := self globalNamedAnyOf: #('PorterStemmer' 'SnowballStemmer' 'EnglishStemmer').
 
@@ -1438,7 +2072,8 @@ CodeAnalysisRunner class >> stemFor: aString [
 
 { #category : 'private' }
 CodeAnalysisRunner class >> stemsOf: aCollectionOfWords [
-	^ aCollectionOfWords collect: [ :each | self stemFor: each ]
+
+	^ aCollectionOfWords collect: [ :each | self stemFor: each asString ]
 ]
 
 { #category : 'private' }
@@ -1526,13 +2161,82 @@ CodeAnalysisRunner class >> tokensPerMethodTexFileName [
 	^ 'all_tokens_per_method.tex'
 ]
 
+{ #category : 'running' }
+CodeAnalysisRunner class >> top10ClassesByTheNumberOfMethods [
+	^ self
+		saveReportNamed: self top10ClassesByTheNumberOfMethodsTexFileName
+		generatedBy: [ self latexTableForTop10ClassesByTheNumberOfMethods ]
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> top10ClassesByTheNumberOfMethodsTexFileName [
+	^ 'top_10_classes_by_method_count.tex'
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> top10MethodsByLOC [
+	^ self
+		saveReportNamed: self top10MethodsByLOCTexFileName
+		generatedBy: [ self latexTableForTop10MethodsByLOC ]
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> top10MethodsByLOCTexFileName [
+	^ 'top_10_methods_by_loc.tex'
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> top10MethodsByToken [
+	^ self
+		saveReportNamed: self top10MethodsByTokenTexFileName
+		generatedBy: [ self latexTableForTop10MethodsByToken ]
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> top10MethodsByTokenTexFileName [
+	^ 'top_10_methods_by_token_count.tex'
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> top10PackagesByTheNumberOfClasses [
+	^ self
+		saveReportNamed: self top10PackagesByTheNumberOfClassesTexFileName
+		generatedBy: [ self latexTableForTop10PackagesByTheNumberOfClasses ]
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> top10PackagesByTheNumberOfClassesTexFileName [
+	^ 'top_10_packages_by_class_count.tex'
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> top10classesbythenumberofmethods [
+	^ self top10ClassesByTheNumberOfMethods
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> top10methodsbyloc [
+	^ self top10MethodsByLOC
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> top10methodsbytoken [
+	^ self top10MethodsByToken
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> top10packagesbythenumberofclasses [
+	^ self top10PackagesByTheNumberOfClasses
+]
+
 { #category : 'accessing' }
 CodeAnalysisRunner class >> wordCountsTexFileName [
 	^ 'word_counts.tex'
 ]
 
 { #category : 'private' }
-CodeAnalysisRunner class >> wordStatisticsFor: aCollectionOfWords [
+CodeAnalysisRunner class >> wordStatisticsFor: aCollectionOfWords [ 
+
 	| words englishWords uniqueWords uniqueEnglishWords uniqueStems uniqueEnglishStems |
 	words := self allWordsInCorpus: aCollectionOfWords.
 	englishWords := self englishWordsFrom: words.
@@ -1608,6 +2312,18 @@ CodeAnalysisRunner class >> wordsFromCorpusValue: anObject [
 ]
 
 { #category : 'private' }
+CodeAnalysisRunner class >> wordsFromDataFilesMatchingAnyOf: nameParts [
+
+	| files |
+	files := self filesInDataDirectoryMatchingAnyOf: nameParts.
+
+	files isEmpty ifTrue: [ ^ #() ].
+
+	^ files flatCollect: [ :file |
+		self wordsFromTextFile: file ]
+]
+
+{ #category : 'private' }
 CodeAnalysisRunner class >> wordsFromString: aString [
 	| sanitized |
 	sanitized := String streamContents: [ :stream |
@@ -1616,6 +2332,15 @@ CodeAnalysisRunner class >> wordsFromString: aString [
 				ifTrue: [ stream nextPut: character asLowercase ]
 				ifFalse: [ stream nextPut: Character space ] ] ].
 	^ (sanitized substrings: ' ') reject: [ :each | each isEmpty ]
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> wordsFromTextFile: aFileReference [
+
+	aFileReference exists ifFalse: [
+		self error: 'Missing text file: ', aFileReference fullName ].
+
+	^ self wordsFromString: aFileReference contents
 ]
 
 { #category : 'saving' }
@@ -1629,13 +2354,50 @@ CodeAnalysisRunner class >> write: aString to: aFileName [
 ]
 
 { #category : 'private' }
-CodeAnalysisRunner class >> writeLatexFamilyEntry: entry rank: rank maximumCount: maximumCount on: stream [
+CodeAnalysisRunner class >> writeLatexFamilyEntry: entry rank: rank on: stream [
 	stream
 		nextPutAll: rank printString;
 		nextPutAll: ' & ';
 		nextPutAll: (self latexEscape: entry key);
-		nextPutAll: ' & \rule{';
-		nextPutAll: (self formatMean: (entry value * 3.0 / maximumCount));
-		nextPutAll: 'em}{1.4ex} & ';
+		nextPutAll: ' & ';
 		nextPutAll: (self formatTableCount: entry value)
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> writePackageSummaryRow: aLabel metrics: aCollection on: stream [
+	| count total rInt rExt |
+	count := aCollection size.
+	total := self sum: (aCollection collect: [ :m | m at: #total ]).
+	rInt := self sum: (aCollection collect: [ :m | m at: #rInt ]).
+	rExt := self sum: (aCollection collect: [ :m | m at: #rExt ]).
+
+	stream nextPutAll: aLabel; nextPutAll: ' & '.
+	stream nextPutAll: (self formatTableCount: count); nextPutAll: ' & '.
+	stream nextPutAll: (self formatTableCount: total); nextPutAll: ' & '.
+	stream nextPutAll: (self formatTableCount: rInt); nextPutAll: ' & '.
+	stream nextPutAll: (self formatTableCount: rExt); nextPutAll: ' \\'; cr
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> writeTop10Table: metrics by: aBlock label: aLabel on: stream [
+	| sorted |
+	sorted := metrics associations asSortedCollection: [ :a :b |
+		(aBlock value: a value) > (aBlock value: b value) or: [
+			(aBlock value: a value) = (aBlock value: b value) and: [ a key < b key ] ] ].
+	sorted := sorted first: (10 min: sorted size).
+
+	stream nextPutAll: '\begin{table}[!htbp]'; cr.
+	stream nextPutAll: '\centering'; cr.
+	stream nextPutAll: '\begin{tabular}{rlr}'; cr.
+	stream nextPutAll: '\hline'; cr.
+	stream nextPutAll: 'Rank & Project & \# of '; nextPutAll: aLabel; nextPutAll: ' \\'; cr.
+	stream nextPutAll: '\hline'; cr.
+	sorted doWithIndex: [ :assoc :rank |
+		stream nextPutAll: rank printString; nextPutAll: ' & '.
+		stream nextPutAll: (self latexEscape: assoc key); nextPutAll: ' & '.
+		stream nextPutAll: (self formatTableCount: (aBlock value: assoc value)); nextPutAll: ' \\'; cr ].
+	stream nextPutAll: '\hline'; cr.
+	stream nextPutAll: '\end{tabular}'; cr.
+	stream nextPutAll: '\caption{Top 10 projects by '; nextPutAll: aLabel; nextPutAll: '.}'; cr.
+	stream nextPutAll: '\end{table}'; cr; cr
 ]

@@ -32,6 +32,20 @@ MethodCollector >> collectDataFromMethod: aMethod [
 ]
 
 { #category : 'collecting' }
+MethodCollector >> collectDataFromMethod: aMethod internalClasses: aCollection [
+	| methodModel metrics |
+	methodModel := self collectDataFromMethod: aMethod.
+
+	metrics := PackageReferenceMetrics withInternalClasses: aCollection.
+	metrics analyzeMethod: aMethod.
+
+	methodModel rInt: metrics rInt.
+	methodModel rExt: metrics rExt.
+
+	^ methodModel
+]
+
+{ #category : 'collecting' }
 MethodCollector >> collectMethodsFromPackage: aPackage [
 	| methods |
 	methods := OrderedCollection new.
@@ -46,20 +60,51 @@ MethodCollector >> collectMethodsFromPackage: aPackage [
 ]
 
 { #category : 'collecting' }
+MethodCollector >> collectMethodsFromPackage: aPackage internalClasses: aCollection [
+	| methods |
+	methods := OrderedCollection new.
+
+	aPackage methods do: [ :aMethod |
+		methods add: (self collectDataFromMethod: aMethod internalClasses: aCollection) ].
+
+	^ PackageModel new
+		name: aPackage name;
+		methods: methods asArray;
+		yourself
+]
+
+{ #category : 'collecting' }
 MethodCollector >> collectMethodsFromProject: aProjectModel [
-	| packages packageModels count |
+	| packages packageModels count projectMetrics internalClasses |
 	packageModels := OrderedCollection new.
 	count := 1.
 
 	packages := self packagesOfProject: aProjectModel.
+	internalClasses := (packages flatCollect: [ :p | p definedClasses ]) asSet.
+
+	projectMetrics := PackageReferenceMetrics withInternalClasses: internalClasses.
 
 	packages
 		do: [ :package |
-			packageModels add: (self collectMethodsFromPackage: package).
+			| packageModel packageMetrics |
+			packageModel := self collectMethodsFromPackage: package internalClasses: internalClasses.
+
+			packageMetrics := PackageReferenceMetrics withInternalClasses: internalClasses.
+			packageMetrics analyzePackage: package.
+			packageModel rInt: packageMetrics rInt.
+			packageModel rExt: packageMetrics rExt.
+			packageModel rhoInt: packageMetrics rhoInt.
+
+			projectMetrics analyzePackage: package.
+
+			packageModels add: packageModel.
 			count := count + 1 ]
 		displayingProgress: [ :package |
 			'(', count asString, '/', packages size asString, ' packages) ', package name ].
 
+	aProjectModel rInt: projectMetrics rInt.
+	aProjectModel rExt: projectMetrics rExt.
+	aProjectModel rhoInt: projectMetrics rhoInt.
 	aProjectModel packages: packageModels asArray.
 	^ aProjectModel
 ]
