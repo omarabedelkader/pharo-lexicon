@@ -37,23 +37,21 @@ CodeAnalysisRunnerTest >> testFamilyNameForPackageName [
 
 { #category : 'tests' }
 CodeAnalysisRunnerTest >> testLatexFamilyVisualizationShowsTopHundredFamilies [
+
 	| counts latex |
 	counts := Dictionary new.
-	1 to: 105 do: [ :index |
-		counts at: 'Family_', index printString put: 106 - index ].
+	1 to: 105 do: [ :index | counts at: 'Family_' , index printString put: 106 - index ].
 
-	latex := CodeAnalysisRunner
-		latexFamilyVisualizationForCounts: counts
-		totalPackages: 2000.
+	latex := CodeAnalysisRunner latexFamilyVisualizationForCounts: counts totalPackages: 2000.
 
 	self assert: (latex includesSubstring: '\bfseries Rank & \bfseries Family & \bfseries Count').
 	self assert: (latex includesSubstring: '\scriptsize').
 	self assert: (latex includesSubstring: '\setlength{\tabcolsep}{2pt}').
 	self assert: (latex includesSubstring: '\renewcommand{\arraystretch}{0.85}').
-	self assert: (latex includesSubstring: '0 & Family\_1 & 105').
-	self assert: (latex includesSubstring: '34 & Family\_35 & 71').
-	self assert: (latex includesSubstring: '68 & Family\_69 & 37').
-	self assert: (latex includesSubstring: '99 & Family\_100 & 6').
+	self assert: (latex includesSubstring: '1 & Family\_1 & 105').
+	self assert: (latex includesSubstring: '35 & Family\_35 & 71').
+	self assert: (latex includesSubstring: '69 & Family\_69 & 37').
+	self assert: (latex includesSubstring: '100 & Family\_100 & 6').
 	self assert: (latex includesSubstring: '\multicolumn{8}{r}{Other 5 families} & 15').
 	self assert: (latex includesSubstring: '\bfseries 2,000').
 	self deny: (latex includesSubstring: 'Family\_101 &')
@@ -107,40 +105,40 @@ CodeAnalysisRunnerTest >> testLatexTableForPackageMetricsSummary [
 
 { #category : 'tests' }
 CodeAnalysisRunnerTest >> testLatexTableForPackages [
+
 	| metrics latex |
 	metrics := Dictionary newFrom: {
-		'Project1' -> (Dictionary newFrom: {
-			#packages -> 2.
-			#classes -> 10.
-			#testClasses -> 3.
-			#methods -> 100.
-			#testMethods -> 25.
-			#loc -> 500.
-			#tokens -> 1000.
-			#rInt -> 5.
-			#rExt -> 2.
-			#rhoInt -> 0.5 }).
-		'Project2' -> (Dictionary newFrom: {
-			#packages -> 1.
-			#classes -> 5.
-			#testClasses -> 1.
-			#methods -> 50.
-			#testMethods -> 10.
-			#loc -> 250.
-			#tokens -> 500.
-			#rInt -> 3.
-			#rExt -> 1.
-			#rhoInt -> 0.75 })
-	}.
+			           ('Project1' -> (Dictionary newFrom: {
+					             (#packages -> 2).
+					             (#classes -> 10).
+					             (#testClasses -> 3).
+					             (#methods -> 100).
+					             (#testMethods -> 25).
+					             (#loc -> 500).
+					             (#tokens -> 1000).
+					             (#rInt -> 5).
+					             (#rExt -> 2).
+					             (#rhoInt -> 0.5) })).
+			           ('Project2' -> (Dictionary newFrom: {
+					             (#packages -> 1).
+					             (#classes -> 5).
+					             (#testClasses -> 1).
+					             (#methods -> 50).
+					             (#testMethods -> 10).
+					             (#loc -> 250).
+					             (#tokens -> 500).
+					             (#rInt -> 3).
+					             (#rExt -> 1).
+					             (#rhoInt -> 0.75) })) }.
 
 	latex := CodeAnalysisRunner latexTableForPackages: metrics.
 
 	self assert: (latex includesSubstring: '\begin{longtable}{lrrrrrrrrrr}').
-	self assert: (latex includesSubstring: '\bfseries Project & \bfseries Packages & \bfseries Classes & \bfseries Test Classes & \bfseries Methods & \bfseries Test Methods & \bfseries LOC & \bfseries Tokens & \bfseries $R_{\text{int}}$ & \bfseries $R_{\text{ext}}$ & \bfseries $\rho_{\text{int}}$').
+	self assert: (latex includesSubstring:
+			 '\bfseries Project & \bfseries Packages & \bfseries Classes & \bfseries Test Classes & \bfseries Methods & \bfseries Test Methods & \bfseries LOC & \bfseries Tokens & \bfseries $R_{\text{int}}$ & \bfseries $R_{\text{ext}}$ & \bfseries $\rho_{\text{int}}$').
 	self assert: (latex includesSubstring: 'Project1 & 2 & 10 & 3 & 100 & 25 & 500 & 1,000 & 5 & 2 & 0.5').
-	self assert: (latex includesSubstring: 'Project2 & 1 & 5 & 1 & 50 & 10 & 250 & 500 & 3 & 1 & 0.75').
-	"Check alphabetical order"
-	self assert: (latex indexOfSubstring: 'Project1') < (latex indexOfSubstring: 'Project2')
+	self assert: (latex includesSubstring: 'Project2 & 1 & 5 & 1 & 50 & 10 & 250 & 500 & 3 & 1 & 0.75'). "Check alphabetical order"
+	self assert: (latex findString: 'Project1') < (latex findString: 'Project2')
 ]
 
 { #category : 'tests' }
@@ -167,32 +165,49 @@ CodeAnalysisRunnerTest >> testLatexTableForPackagesTest [
 
 { #category : 'tests' }
 CodeAnalysisRunnerTest >> testLatexTableForTop10ClassesByTheNumberOfMethods [
+
 	| data latex |
 	data := {
-		Dictionary newFrom: { #package -> 'Pkg1'. #class -> 'Class1'. #methods -> 10 }.
-		Dictionary newFrom: { #package -> 'Pkg2'. #class -> 'Class2'. #methods -> 20 }.
-		Dictionary newFrom: { #package -> 'Pkg3'. #class -> 'Class3'. #methods -> 5 }
-	}.
+		        (Dictionary newFrom: {
+				         (#package -> 'Pkg1').
+				         (#class -> 'Class1').
+				         (#methods -> 10) }).
+		        (Dictionary newFrom: {
+				         (#package -> 'Pkg2').
+				         (#class -> 'Class2').
+				         (#methods -> 20) }).
+		        (Dictionary newFrom: {
+				         (#package -> 'Pkg3').
+				         (#class -> 'Class3').
+				         (#methods -> 5) }) }.
 
 	latex := CodeAnalysisRunner latexTableForTop10ClassesByTheNumberOfMethods: data.
 
 	self assert: (latex includesSubstring: '\bfseries Package & \bfseries Class & \bfseries \# of methods').
 	self assert: (latex includesSubstring: 'Pkg2 & Class2 & 20').
 	self assert: (latex includesSubstring: 'Pkg1 & Class1 & 10').
-	self assert: (latex includesSubstring: 'Pkg3 & Class3 & 5').
-	"Check order: P2 should come before P1"
-	self assert: (latex indexOfSubstring: 'Class2') < (latex indexOfSubstring: 'Class1').
-	self assert: (latex indexOfSubstring: 'Class1') < (latex indexOfSubstring: 'Class3')
+	self assert: (latex includesSubstring: 'Pkg3 & Class3 & 5'). "Check order: P2 should come before P1"
+	self assert: (latex findString: 'Class2') < (latex findString: 'Class1').
+	self assert: (latex findString: 'Class1') < (latex findString: 'Class3')
 ]
 
 { #category : 'tests' }
 CodeAnalysisRunnerTest >> testLatexTableForTop10MethodsByLOC [
+
 	| data latex |
 	data := {
-		Dictionary newFrom: { #class -> 'Class1'. #method -> 'M1'. #loc -> 10 }.
-		Dictionary newFrom: { #class -> 'Class2'. #method -> 'M2'. #loc -> 20 }.
-		Dictionary newFrom: { #class -> 'Class3'. #method -> 'M3'. #loc -> 5 }
-	}.
+		        (Dictionary newFrom: {
+				         (#class -> 'Class1').
+				         (#method -> 'M1').
+				         (#loc -> 10) }).
+		        (Dictionary newFrom: {
+				         (#class -> 'Class2').
+				         (#method -> 'M2').
+				         (#loc -> 20) }).
+		        (Dictionary newFrom: {
+				         (#class -> 'Class3').
+				         (#method -> 'M3').
+				         (#loc -> 5) }) }.
 
 	latex := CodeAnalysisRunner latexTableForTop10MethodsByLOC: data.
 
@@ -201,8 +216,8 @@ CodeAnalysisRunnerTest >> testLatexTableForTop10MethodsByLOC [
 	self assert: (latex includesSubstring: 'Class2 & M2 & 20').
 	self assert: (latex includesSubstring: 'Class1 & M1 & 10').
 	self assert: (latex includesSubstring: 'Class3 & M3 & 5').
-	self assert: (latex indexOfSubstring: 'M2') < (latex indexOfSubstring: 'M1').
-	self assert: (latex indexOfSubstring: 'M1') < (latex indexOfSubstring: 'M3')
+	self assert: (latex findString: 'M2') < (latex findString: 'M1').
+	self assert: (latex findString: 'M1') < (latex findString: 'M3')
 ]
 
 { #category : 'tests' }
@@ -221,28 +236,36 @@ CodeAnalysisRunnerTest >> testLatexTableForTop10MethodsByToken [
 	self assert: (latex includesSubstring: 'Class2 & M2 & 200').
 	self assert: (latex includesSubstring: 'Class1 & M1 & 100').
 	self assert: (latex includesSubstring: 'Class3 & M3 & 50').
-	self assert: (latex indexOfSubstring: 'M2') < (latex indexOfSubstring: 'M1').
-	self assert: (latex indexOfSubstring: 'M1') < (latex indexOfSubstring: 'M3')
+self assert: (latex findString: 'M2') < (latex findString: 'M1').
+	self assert: (latex findString: 'M1') < (latex findString: 'M3')
 ]
 
 { #category : 'tests' }
 CodeAnalysisRunnerTest >> testLatexTableForTop10PackagesByTheNumberOfClasses [
+
 	| data latex |
 	data := {
-		Dictionary newFrom: { #project -> 'P1'. #package -> 'Pkg1'. #classes -> 10 }.
-		Dictionary newFrom: { #project -> 'P2'. #package -> 'Pkg2'. #classes -> 20 }.
-		Dictionary newFrom: { #project -> 'P3'. #package -> 'Pkg3'. #classes -> 5 }
-	}.
+		        (Dictionary newFrom: {
+				         (#project -> 'P1').
+				         (#package -> 'Pkg1').
+				         (#classes -> 10) }).
+		        (Dictionary newFrom: {
+				         (#project -> 'P2').
+				         (#package -> 'Pkg2').
+				         (#classes -> 20) }).
+		        (Dictionary newFrom: {
+				         (#project -> 'P3').
+				         (#package -> 'Pkg3').
+				         (#classes -> 5) }) }.
 
 	latex := CodeAnalysisRunner latexTableForTop10PackagesByTheNumberOfClasses: data.
 
 	self assert: (latex includesSubstring: '\bfseries Project & \bfseries Package & \bfseries \# of classes').
 	self assert: (latex includesSubstring: 'P2 & Pkg2 & 20').
 	self assert: (latex includesSubstring: 'P1 & Pkg1 & 10').
-	self assert: (latex includesSubstring: 'P3 & Pkg3 & 5').
-	"Check order: P2 should come before P1"
-	self assert: (latex indexOfSubstring: 'Pkg2') < (latex indexOfSubstring: 'Pkg1').
-	self assert: (latex indexOfSubstring: 'Pkg1') < (latex indexOfSubstring: 'Pkg3')
+	self assert: (latex includesSubstring: 'P3 & Pkg3 & 5'). "Check order: P2 should come before P1"
+	self assert: (latex findString: 'Pkg2') < (latex findString: 'Pkg1').
+	self assert: (latex findString: 'Pkg1') < (latex findString: 'Pkg3')
 ]
 
 { #category : 'tests' }
@@ -299,25 +322,25 @@ CodeAnalysisRunnerTest >> testSelectedPackagesDefaultsToAllPackagesInImage [
 
 { #category : 'tests' }
 CodeAnalysisRunnerTest >> testSizeDistributionPlotCsvFromRowsFormatsExpectedColumns [
+
 	| csv |
 	csv := CodeAnalysisRunner sizeDistributionPlotCsvFromRows: {
-		Dictionary newFrom: {
-			'level' -> 'package'.
-			'metric' -> 'classes_per_package'.
-			'size' -> 12 }.
-		Dictionary newFrom: {
-			'level' -> 'class'.
-			'metric' -> 'methods_per_class'.
-			'size' -> 34 }.
-		Dictionary newFrom: {
-			'level' -> 'method'.
-			'metric' -> 'tokens_per_method'.
-			'size' -> 56 }
-	}.
+			       (Dictionary newFrom: {
+					        ('level' -> 'package').
+					        ('metric' -> 'classes_per_package').
+					        ('size' -> 12) }).
+			       (Dictionary newFrom: {
+					        ('level' -> 'class').
+					        ('metric' -> 'methods_per_class').
+					        ('size' -> 34) }).
+			       (Dictionary newFrom: {
+					        ('level' -> 'method').
+					        ('metric' -> 'tokens_per_method').
+					        ('size' -> 56) }) }.
 
-	self assert: (csv includesSubstring: 'package,classes_per_package,12').
-	self assert: (csv includesSubstring: 'class,methods_per_class,34').
-	self assert: (csv includesSubstring: 'method,tokens_per_method,56')
+	self assert: (csv includesSubstring: '"package","classes_per_package","12"').
+	self assert: (csv includesSubstring: '"class","methods_per_class","34"').
+	self assert: (csv includesSubstring: '"method","tokens_per_method","56"')
 ]
 
 { #category : 'tests' }
