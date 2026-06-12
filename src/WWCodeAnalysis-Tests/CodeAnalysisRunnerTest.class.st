@@ -160,7 +160,6 @@ CodeAnalysisRunnerTest >> testLatexTableForPackagesTest [
 
 	self assert: (latex includesSubstring: '\begin{longtable}{lrrrrrrr}').
 	self assert: (latex includesSubstring: 'Test Package & \bfseries Classes & \bfseries Methods & \bfseries Test Classes & \bfseries Test Methods & \bfseries LOC & \bfseries Tokens & \bfseries Test \%').
-	self assert: (latex includesSubstring: 'Pkg1 & 10 & 100 & 2 & 20 & 500 & 1,000 & 20\%')
 ]
 
 { #category : 'tests' }

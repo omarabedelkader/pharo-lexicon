@@ -989,34 +989,83 @@ CodeAnalysisRunner class >> latexTableForPackages: metrics [
 
 { #category : 'running' }
 CodeAnalysisRunner class >> latexTableForPackagesTest [
+
+	^ self latexTableForPackagesTest: self packageTestMetrics
+]
+
+{ #category : 'running' }
+CodeAnalysisRunner class >> latexTableForPackagesTest: metrics [
+
 	| metrics |
 	metrics := self packageTestMetrics.
 	^ String streamContents: [ :stream |
-		stream nextPutAll: '\begin{longtable}{lrrrrrrr}'; cr.
-		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: 'Test Package & \bfseries Classes & \bfseries Methods & \bfseries Test Classes & \bfseries Test Methods & \bfseries LOC & \bfseries Tokens & \bfseries Test \% \\' ; cr.
-		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: '\endfirsthead'; cr.
-		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: 'Test Package & \bfseries Classes & \bfseries Methods & \bfseries Test Classes & \bfseries Test Methods & \bfseries LOC & \bfseries Tokens & \bfseries Test \% \\' ; cr.
-		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: '\endhead'; cr.
-		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: '\endfoot'; cr.
-		stream nextPutAll: '\endlastfoot'; cr.
-		metrics do: [ :m |
-			| percentage |
-			percentage := (m at: #testPercentage) copyReplaceAll: '%' with: '\%'.
-			stream nextPutAll: (self latexEscape: (m at: #name)); nextPutAll: ' & '.
-			stream nextPutAll: (self formatTableCount: (m at: #classCount)); nextPutAll: ' & '.
-			stream nextPutAll: (self formatTableCount: (m at: #methodCount)); nextPutAll: ' & '.
-			stream nextPutAll: (self formatTableCount: (m at: #testClasses)); nextPutAll: ' & '.
-			stream nextPutAll: (self formatTableCount: (m at: #testMethods)); nextPutAll: ' & '.
-			stream nextPutAll: (self formatTableCount: (m at: #loc)); nextPutAll: ' & '.
-			stream nextPutAll: (self formatTableCount: (m at: #tokens)); nextPutAll: ' & '.
-			stream nextPutAll: percentage; nextPutAll: ' \\'; cr ].
-		stream nextPutAll: '\end{longtable}'
-	]
+			  stream
+				  nextPutAll: '\begin{longtable}{lrrrrrrr}';
+				  cr.
+			  stream
+				  nextPutAll: '\hline';
+				  cr.
+			  stream
+				  nextPutAll:
+					  'Test Package & \bfseries Classes & \bfseries Methods & \bfseries Test Classes & \bfseries Test Methods & \bfseries LOC & \bfseries Tokens & \bfseries Test \% \\';
+				  cr.
+			  stream
+				  nextPutAll: '\hline';
+				  cr.
+			  stream
+				  nextPutAll: '\endfirsthead';
+				  cr.
+			  stream
+				  nextPutAll: '\hline';
+				  cr.
+			  stream
+				  nextPutAll:
+					  'Test Package & \bfseries Classes & \bfseries Methods & \bfseries Test Classes & \bfseries Test Methods & \bfseries LOC & \bfseries Tokens & \bfseries Test \% \\';
+				  cr.
+			  stream
+				  nextPutAll: '\hline';
+				  cr.
+			  stream
+				  nextPutAll: '\endhead';
+				  cr.
+			  stream
+				  nextPutAll: '\hline';
+				  cr.
+			  stream
+				  nextPutAll: '\endfoot';
+				  cr.
+			  stream
+				  nextPutAll: '\endlastfoot';
+				  cr.
+			  metrics do: [ :m |
+					  | percentage |
+					  percentage := (m at: #testPercentage) copyReplaceAll: '%' with: '\%'.
+					  stream
+						  nextPutAll: (self latexEscape: (m at: #name));
+						  nextPutAll: ' & '.
+					  stream
+						  nextPutAll: (self formatTableCount: (m at: #classCount));
+						  nextPutAll: ' & '.
+					  stream
+						  nextPutAll: (self formatTableCount: (m at: #methodCount));
+						  nextPutAll: ' & '.
+					  stream
+						  nextPutAll: (self formatTableCount: (m at: #testClasses));
+						  nextPutAll: ' & '.
+					  stream
+						  nextPutAll: (self formatTableCount: (m at: #testMethods));
+						  nextPutAll: ' & '.
+					  stream
+						  nextPutAll: (self formatTableCount: (m at: #loc));
+						  nextPutAll: ' & '.
+					  stream
+						  nextPutAll: (self formatTableCount: (m at: #tokens));
+						  nextPutAll: ' & '.
+					  stream
+						  nextPutAll: percentage;
+						  nextPutAll: ' \\';
+						  cr ].
+			  stream nextPutAll: '\end{longtable}' ]
 ]
 
 { #category : 'running' }
