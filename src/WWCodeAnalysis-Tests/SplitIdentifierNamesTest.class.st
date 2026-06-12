@@ -1,10 +1,11 @@
 Class {
-	#name : #SplitIdentifierNamesTest,
-	#superclass : #TestCase,
-	#category : #'WWCodeAnalysis-Tests'
+	#name : 'SplitIdentifierNamesTest',
+	#superclass : 'TestCase',
+	#category : 'WWCodeAnalysis-Tests',
+	#package : 'WWCodeAnalysis-Tests'
 }
 
-{ #category : #tests }
+{ #category : 'tests' }
 SplitIdentifierNamesTest >> testClassNameOneWord [
 	| name expected actual |
 	name := 'Example'.
@@ -13,7 +14,7 @@ SplitIdentifierNamesTest >> testClassNameOneWord [
 	self assert: actual equals: expected
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 SplitIdentifierNamesTest >> testClassNameTwoWords [
 	| name expected actual |
 	name := 'ExampleDraw'.
@@ -22,7 +23,7 @@ SplitIdentifierNamesTest >> testClassNameTwoWords [
 	self assert: actual equals: expected
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 SplitIdentifierNamesTest >> testClassNameTwoWordsPrefix [
 	| name expected actual |
 	name := 'RTExampleDraw'.
@@ -31,7 +32,7 @@ SplitIdentifierNamesTest >> testClassNameTwoWordsPrefix [
 	self assert: actual equals: expected
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 SplitIdentifierNamesTest >> testClassNameTwoWordsPrefixDigits [
 	| name expected actual |
 	name := 'RTExampleDraw123'.
@@ -40,7 +41,7 @@ SplitIdentifierNamesTest >> testClassNameTwoWordsPrefixDigits [
 	self assert: actual equals: expected
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 SplitIdentifierNamesTest >> testClassNameTwoWordsPrefixDigitsLowercase [
 	| name expected actual |
 	name := 'RTExampleDraw123hello'.
@@ -49,7 +50,7 @@ SplitIdentifierNamesTest >> testClassNameTwoWordsPrefixDigitsLowercase [
 	self assert: actual equals: expected
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 SplitIdentifierNamesTest >> testMethodNameOneWordNoArgs [
 	| name expected actual |
 	name := 'example'.
@@ -58,7 +59,7 @@ SplitIdentifierNamesTest >> testMethodNameOneWordNoArgs [
 	self assert: actual equals: expected
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 SplitIdentifierNamesTest >> testMethodNameOneWordOneArg [
 	| name expected actual |
 	name := 'example:'.
@@ -67,7 +68,7 @@ SplitIdentifierNamesTest >> testMethodNameOneWordOneArg [
 	self assert: actual equals: expected
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 SplitIdentifierNamesTest >> testMethodNameOneWordOneDigitNoArgs [
 	| name expected actual |
 	name := 'example1'.
@@ -76,7 +77,7 @@ SplitIdentifierNamesTest >> testMethodNameOneWordOneDigitNoArgs [
 	self assert: actual equals: expected
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 SplitIdentifierNamesTest >> testMethodNameOneWordOneDigitOneArg [
 	| name expected actual |
 	name := 'example1:'.
@@ -85,7 +86,7 @@ SplitIdentifierNamesTest >> testMethodNameOneWordOneDigitOneArg [
 	self assert: actual equals: expected
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 SplitIdentifierNamesTest >> testMethodNameOneWordTwoDigitsNoArgs [
 	| name expected actual |
 	name := 'example12'.
@@ -94,7 +95,7 @@ SplitIdentifierNamesTest >> testMethodNameOneWordTwoDigitsNoArgs [
 	self assert: actual equals: expected
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 SplitIdentifierNamesTest >> testMethodNameOneWordTwoDigitsOneArg [
 	| name expected actual |
 	name := 'example12:'.
@@ -103,7 +104,7 @@ SplitIdentifierNamesTest >> testMethodNameOneWordTwoDigitsOneArg [
 	self assert: actual equals: expected
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 SplitIdentifierNamesTest >> testMethodNameTwoWordsNoArgs [
 	| name expected actual |
 	name := 'exampleDraw'.
@@ -112,7 +113,7 @@ SplitIdentifierNamesTest >> testMethodNameTwoWordsNoArgs [
 	self assert: actual equals: expected
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 SplitIdentifierNamesTest >> testMethodNameTwoWordsOneArg [
 	| name expected actual |
 	name := 'exampleDraw:'.
@@ -121,7 +122,7 @@ SplitIdentifierNamesTest >> testMethodNameTwoWordsOneArg [
 	self assert: actual equals: expected
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 SplitIdentifierNamesTest >> testMethodNameTwoWordsTwoArgs [
 	| name expected actual |
 	name := 'example:draw:'.
@@ -130,7 +131,7 @@ SplitIdentifierNamesTest >> testMethodNameTwoWordsTwoArgs [
 	self assert: actual equals: expected
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 SplitIdentifierNamesTest >> testMethodNameTwoWordsTwoDigitsLowercaseNoArgs [
 	| name expected actual |
 	name := 'exampleDraw123hello'.
@@ -139,7 +140,7 @@ SplitIdentifierNamesTest >> testMethodNameTwoWordsTwoDigitsLowercaseNoArgs [
 	self assert: actual equals: expected
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 SplitIdentifierNamesTest >> testOperator [
 	| name expected actual |
 	name := '+'.
@@ -148,7 +149,7 @@ SplitIdentifierNamesTest >> testOperator [
 	self assert: actual equals: expected
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 SplitIdentifierNamesTest >> testOperatorInTheMiddle [
 	| name expected actual |
 	name := 'Hello>>world'.
@@ -157,7 +158,7 @@ SplitIdentifierNamesTest >> testOperatorInTheMiddle [
 	self assert: actual equals: expected
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 SplitIdentifierNamesTest >> testOperatorTwoSymbols [
 	| name expected actual |
 	name := '>>'.

@@ -1,1 +1,1 @@
-Package { #name : #'WWCodeAnalysis-Tests' }
+Package { #name : 'WWCodeAnalysis-Tests' }

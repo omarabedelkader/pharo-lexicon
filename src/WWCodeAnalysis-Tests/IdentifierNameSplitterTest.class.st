@@ -1,19 +1,20 @@
 Class {
-	#name : #IdentifierNameSplitterTest,
-	#superclass : #TestCase,
+	#name : 'IdentifierNameSplitterTest',
+	#superclass : 'TestCase',
 	#instVars : [
 		'splitter'
 	],
-	#category : #'WWCodeAnalysis-Tests'
+	#category : 'WWCodeAnalysis-Tests',
+	#package : 'WWCodeAnalysis-Tests'
 }
 
-{ #category : #running }
+{ #category : 'running' }
 IdentifierNameSplitterTest >> setUp [
 	super setUp.
 	splitter := IdentifierNameSplitter new
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 IdentifierNameSplitterTest >> testSeparateAbbreviationsIn [
 	| string expected actual |
 	string := 'HTMLHelloWorldAST'.
@@ -22,7 +23,7 @@ IdentifierNameSplitterTest >> testSeparateAbbreviationsIn [
 	self assert: actual equals: expected
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 IdentifierNameSplitterTest >> testSeparateCamelCaseIn [
 	| string expected actual |
 	string := 'loremIpsumHelloWorld'.
@@ -31,7 +32,7 @@ IdentifierNameSplitterTest >> testSeparateCamelCaseIn [
 	self assert: actual equals: expected
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 IdentifierNameSplitterTest >> testSeparateNonAlphanumericIn [
 	| string expected actual |
 	string := 'Xy_HelloWorld:10>>42x++'.
@@ -40,7 +41,7 @@ IdentifierNameSplitterTest >> testSeparateNonAlphanumericIn [
 	self assert: actual equals: expected
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 IdentifierNameSplitterTest >> testSeparateNumbersIn [
 	| string expected actual |
 	string := 'HTML42HelloWorld5instanceAST'.
@@ -49,7 +50,7 @@ IdentifierNameSplitterTest >> testSeparateNumbersIn [
 	self assert: actual equals: expected
 ]
 
-{ #category : #tests }
+{ #category : 'tests' }
 IdentifierNameSplitterTest >> testSplitIdentifierName [
 	| string expected actual |
 	string := 'a_bc>>xy42HTMLEditor:AST++'.
