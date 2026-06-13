@@ -90,7 +90,6 @@ CodeAnalysisRunnerTest >> testWriteTop10Table [
 ]
 
 { #category : 'tests' }
->>>>>>> 0705ae2 (better readme and run the metrics package nam locality)
 CodeAnalysisRunnerTest >> testFamilyNameForPackageName [
 	self
 		assert: (CodeAnalysisRunner familyNameForPackageName: 'Collections-Abstract')
