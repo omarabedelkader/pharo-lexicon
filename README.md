@@ -18,13 +18,65 @@ You can change that with `CodeAnalysisRunner outputDirectory: aFileReference`.
 
 ### Package Reference Metrics
 
-The analyzer computes coupling metrics based on class references within methods:
+The dedicated name-locality report computes package-scoped metrics over resolved
+class-name references in methods:
 
-- **R_int**: Count of references to classes defined within the same project.
-- **R_ext**: Count of references to classes defined outside the project.
-- **rho_int**: The internal reference ratio: $R_{int} / (R_{int} + R_{ext})$.
+- **localReferences**: references to classes defined by the same package.
+- **externalReferences**: references to classes defined outside the package.
+- **localityRatio**: `localReferences / resolvedClassReferences`.
+- **externalityRatio**: `externalReferences / resolvedClassReferences`.
+- **usedLocalClasses**: distinct package-defined classes referenced at least once.
+- **locallyUsedClassRatio**: `usedLocalClasses / definedClasses`.
 
-These metrics are automatically included in the CSV exports for projects, packages, and methods.
+Repeated references count separately in the reference ratios but only once in
+the distinct-class coverage metric. The older `rInt`, `rExt`, and `rhoInt`
+fields in collector exports remain project-scoped for compatibility.
+
+#### Generate the name-locality tables
+
+1. Open the Pharo image containing all projects from the analyzed corpus. The
+   target packages and their classes must be loaded in the image before running
+   the analysis.
+
+2. Load this local checkout from a Pharo Playground:
+
+```smalltalk
+Metacello new
+  baseline: 'PharoLexicon';
+  repository: 'tonel:///Users/omar/Desktop/Github/pharo-lexicon/src';
+  load.
+```
+
+When the changes are available on GitHub, the repository can instead be loaded
+with:
+
+```smalltalk
+Metacello new
+  githubUser: 'omarabedelkader'
+  project: 'pharo-lexicon'
+  commitish: 'main'
+  path: 'src';
+  baseline: 'PharoLexicon';
+  load.
+```
+
+3. Select the packages belonging to the corpus. Use explicit package names so
+   Pharo's own unrelated packages are not included:
+
+```smalltalk
+CodeAnalysisRunner packageNames: #(
+  'MyProject-Core'
+  'MyProject-Tests'
+  'AnotherProject-Model'
+  'AnotherProject-Tests'
+).
+```
+
+To intentionally analyze every package loaded in the image:
+
+```smalltalk
+CodeAnalysisRunner packageNames: #().
+```
 
 Run the analyses with:
 
@@ -95,6 +147,8 @@ CodeAnalysisRunner listpackagestest.
 CodeAnalysisRunner listpackagemetrics.
 "writes list_package_metrics.tex"
 
+CodeAnalysisRunner nameLocalityReports.
+
 ```
 
 Downlaod these projects:
@@ -117,4 +171,3 @@ To downlaod the NLTK dataset :
 python3 -m venv venv
 source venv/bin/activate
 python downloadcoprus.py
-

@@ -20,6 +20,78 @@ CodeAnalysisRunnerTest >> testCalculateStatisticsFor [
 ]
 
 { #category : 'tests' }
+<<<<<<< HEAD
+=======
+CodeAnalysisRunnerTest >> testTexFileName [
+	self assert: CodeAnalysisRunner countsTexFileName equals: 'counts.tex'.
+	self assert: CodeAnalysisRunner boxplotDistributionPlotCsvFileName equals: 'size_distribution_plot.csv'.
+	self assert: CodeAnalysisRunner classesPerPackageTexFileName equals: 'all_classes_per_package.tex'.
+	self assert: CodeAnalysisRunner familiesTexFileName equals: 'families.tex'.
+	self assert: CodeAnalysisRunner locPerNonDataMethodTexFileName equals: 'all_loc_per_non_data_method.tex'.
+	self assert: CodeAnalysisRunner methodsPerClassTexFileName equals: 'all_methods_per_class.tex'.
+	self assert: CodeAnalysisRunner pharoIdentifierNamesDistributionTexFileName equals: 'pharo_identifier_names_distribution.tex'.
+	self assert: CodeAnalysisRunner pharoLiteralDistributionTexFileName equals: 'pharo_literal_distribution.tex'.
+	self assert: CodeAnalysisRunner pharoTokenTypeDistributionTexFileName equals: 'pharo_token_type_distribution.tex'.
+	self assert: CodeAnalysisRunner testTableTexFileName equals: 'test_table.tex'.
+	self assert: CodeAnalysisRunner wordCountsTexFileName equals: 'word_counts.tex'.
+	self assert: CodeAnalysisRunner tokensPerMethodTexFileName equals: 'all_tokens_per_method.tex'.
+	self assert: CodeAnalysisRunner top10PackagesByTheNumberOfClassesTexFileName equals: 'top_10_packages_by_class_count.tex'.
+	self assert: CodeAnalysisRunner top10ClassesByTheNumberOfMethodsTexFileName equals: 'top_10_classes_by_method_count.tex'.
+	self assert: CodeAnalysisRunner top10MethodsByLOCTexFileName equals: 'top_10_methods_by_loc.tex'.
+	self assert: CodeAnalysisRunner top10MethodsByTokenTexFileName equals: 'top_10_methods_by_token_count.tex'.
+	self assert: CodeAnalysisRunner listPackageMetricsTexFileName equals: 'list_package_metrics.tex'.
+	self assert: CodeAnalysisRunner nameLocalitySummaryTexFileName equals: 'tables/name_locality_summary.tex'.
+	self assert: CodeAnalysisRunner nameLocalityTop3LocalityTexFileName equals: 'tables/name_locality_top3_locality.tex'.
+	self assert: CodeAnalysisRunner nameLocalityBottom3LocalityTexFileName equals: 'tables/name_locality_bottom3_locality.tex'.
+	self assert: CodeAnalysisRunner nameLocalityTop3ExternalityTexFileName equals: 'tables/name_locality_top3_externality.tex'.
+	self assert: CodeAnalysisRunner nameLocalityTop3LocallyUsedClassesTexFileName equals: 'tables/name_locality_top3_locally_used_classes.tex'.
+	self assert: CodeAnalysisRunner nameLocalityBottom3LocallyUsedClassesTexFileName equals: 'tables/name_locality_bottom3_locally_used_classes.tex'.
+	self assert: CodeAnalysisRunner nameLocalityTop3TestPackagesTexFileName equals: 'tables/name_locality_top3_test_packages.tex'.
+	self assert: CodeAnalysisRunner nameLocalityCsvFileName equals: 'data/name_locality_by_package.csv'.
+	self assert: CodeAnalysisRunner nameLocalityFigureTexFileName equals: 'figures/name-locality-ratios.tex'
+]
+
+{ #category : 'tests' }
+CodeAnalysisRunnerTest >> testLatexTableForPackageMetricsSummary [
+	| metrics latex |
+	metrics := {
+		Dictionary newFrom: { #name -> 'Pkg1'. #isTest -> false. #rInt -> 10. #rExt -> 5. #total -> 15 }.
+		Dictionary newFrom: { #name -> 'Pkg1-Tests'. #isTest -> true. #rInt -> 20. #rExt -> 10. #total -> 30 }
+	}.
+
+	latex := CodeAnalysisRunner latexTableForPackageMetricsSummary: metrics.
+
+	self assert: (latex includesSubstring: '\begin{tabular}{lrrrr}').
+	self assert: (latex includesSubstring: 'Package kind & Packages & Class-name references & Local references & External references').
+	self assert: (latex includesSubstring: 'Production packages & 1 & 15 & 10 & 5').
+	self assert: (latex includesSubstring: 'Test packages & 1 & 30 & 20 & 10').
+	self assert: (latex includesSubstring: 'All packages & 2 & 45 & 30 & 15')
+]
+
+{ #category : 'tests' }
+CodeAnalysisRunnerTest >> testWriteTop10Table [
+	| metrics stream latex |
+	metrics := Dictionary newFrom: {
+		'ProjA' -> (Dictionary newFrom: { #rInt -> 100. #rExt -> 50 }).
+		'ProjB' -> (Dictionary newFrom: { #rInt -> 200. #rExt -> 20 }).
+		'ProjC' -> (Dictionary newFrom: { #rInt -> 10. #rExt -> 300 })
+	}.
+	
+	stream := WriteStream on: String new.
+	CodeAnalysisRunner writeTop10Table: metrics by: [ :m | (m at: #rInt) + (m at: #rExt) ] label: 'Class-name references' on: stream.
+	latex := stream contents.
+
+	self assert: (latex includesSubstring: '\begin{table}[!htbp]').
+	self assert: (latex includesSubstring: 'Rank & Project & \# of Class-name references').
+	"ProjC should be rank 1 (310), ProjB rank 2 (220), ProjA rank 3 (150)"
+	self assert: (latex includesSubstring: '1 & ProjC & 310').
+	self assert: (latex includesSubstring: '2 & ProjB & 220').
+	self assert: (latex includesSubstring: '3 & ProjA & 150').
+	self assert: (latex includesSubstring: '\caption{Top 10 projects by Class-name references.}')
+]
+
+{ #category : 'tests' }
+>>>>>>> 0705ae2 (better readme and run the metrics package nam locality)
 CodeAnalysisRunnerTest >> testFamilyNameForPackageName [
 	self
 		assert: (CodeAnalysisRunner familyNameForPackageName: 'Collections-Abstract')
@@ -383,4 +455,114 @@ CodeAnalysisRunnerTest >> testWriteTop10Table [
 	self assert: (latex includesSubstring: '2 & ProjB & 220').
 	self assert: (latex includesSubstring: '3 & ProjA & 150').
 	self assert: (latex includesSubstring: '\caption{Top 10 projects by Class-name references.}')
+]
+
+{ #category : 'tests' }
+CodeAnalysisRunnerTest >> testLatexNameLocalitySummaryUsesTable16Totals [
+	| metrics latex |
+	metrics := {
+		Dictionary newFrom: {
+			#isTestPackage -> false.
+			#resolvedClassReferences -> 54206.
+			#localReferences -> 25042.
+			#externalReferences -> 29164 }.
+		Dictionary newFrom: {
+			#isTestPackage -> true.
+			#resolvedClassReferences -> 50776.
+			#localReferences -> 35201.
+			#externalReferences -> 15575 }
+	}.
+
+	latex := CodeAnalysisRunner latexNameLocalitySummaryFor: metrics.
+
+	self assert: (latex includesSubstring: 'Production packages & 1 & 54,206 & 25,042 & 46.2\% & 29,164 & 53.8\%').
+	self assert: (latex includesSubstring: 'Test packages & 1 & 50,776 & 35,201 & 69.3\% & 15,575 & 30.7\%').
+	self assert: (latex includesSubstring: 'All packages & 2 & 104,982 & 60,243 & 57.4\% & 44,739 & 42.6\%')
+]
+
+{ #category : 'tests' }
+CodeAnalysisRunnerTest >> testNameLocalityCsvContainsRequestedColumns [
+	| metrics csv |
+	metrics := {
+		Dictionary newFrom: {
+			#packageName -> 'Pkg-Tests'.
+			#projectOrFamily -> 'Pkg'.
+			#isTestPackage -> true.
+			#definedClasses -> 4.
+			#resolvedClassReferences -> 20.
+			#localReferences -> 15.
+			#externalReferences -> 5.
+			#localityRatio -> 0.75.
+			#externalityRatio -> 0.25.
+			#usedLocalClasses -> 3.
+			#locallyUsedClassRatio -> 0.75 }
+	}.
+
+	csv := CodeAnalysisRunner nameLocalityCsvFor: metrics.
+
+	self assert: (csv includesSubstring: '"packageName","projectOrFamily","isTestPackage","definedClasses","resolvedClassReferences","localReferences","externalReferences","localityRatio","externalityRatio","usedLocalClasses","locallyUsedClassRatio"').
+	self assert: (csv includesSubstring: '"Pkg-Tests","Pkg","true","4","20","15","5","0.75","0.25","3","0.75"')
+]
+
+{ #category : 'tests' }
+CodeAnalysisRunnerTest >> testNameLocalityFigureUsesConsistentRatios [
+	| latex |
+	latex := CodeAnalysisRunner nameLocalityFigureLatex.
+
+	self assert: (latex includesSubstring: '28 local refs, 40 external refs').
+	self assert: (latex includesSubstring: '\rho_{\mathrm{local}}=41.2\%').
+	self assert: (latex includesSubstring: '\rho_{\mathrm{external}}=58.8\%').
+	self assert: (latex includesSubstring: '5 local refs, 20 external refs').
+	self assert: (latex includesSubstring: '\rho_{\mathrm{external}}=80\%')
+]
+
+{ #category : 'tests' }
+CodeAnalysisRunnerTest >> testNameLocalitySupportFilters [
+	| metrics referenceMetrics coverageMetrics |
+	metrics := {
+		Dictionary newFrom: {
+			#packageName -> 'TooFewReferences'.
+			#resolvedClassReferences -> 9.
+			#definedClasses -> 3 }.
+		Dictionary newFrom: {
+			#packageName -> 'EnoughReferences'.
+			#resolvedClassReferences -> 10.
+			#definedClasses -> 2 }
+	}.
+
+	referenceMetrics := CodeAnalysisRunner nameLocalityReferenceMetricsFrom: metrics.
+	coverageMetrics := CodeAnalysisRunner nameLocalityCoverageMetricsFrom: metrics.
+
+	self assert: referenceMetrics size equals: 1.
+	self assert: referenceMetrics first equals: metrics second.
+	self assert: coverageMetrics size equals: 1.
+	self assert: coverageMetrics first equals: metrics first
+]
+
+{ #category : 'tests' }
+CodeAnalysisRunnerTest >> testNameLocalityRankingUsesSupportAsTieBreaker [
+	| metrics sorted |
+	metrics := {
+		Dictionary newFrom: {
+			#packageName -> 'PkgA'.
+			#localityRatio -> 0.8.
+			#resolvedClassReferences -> 20 }.
+		Dictionary newFrom: {
+			#packageName -> 'PkgB'.
+			#localityRatio -> 0.8.
+			#resolvedClassReferences -> 30 }.
+		Dictionary newFrom: {
+			#packageName -> 'PkgC'.
+			#localityRatio -> 0.7.
+			#resolvedClassReferences -> 100 }
+	}.
+
+	sorted := CodeAnalysisRunner
+		nameLocalityTopThreeFrom: metrics
+		metric: #localityRatio
+		descending: true
+		support: #resolvedClassReferences.
+
+	self assert: (sorted collect: [ :each | each at: #packageName ]) asArray
+		equals: #('PkgB' 'PkgA' 'PkgC')
 ]

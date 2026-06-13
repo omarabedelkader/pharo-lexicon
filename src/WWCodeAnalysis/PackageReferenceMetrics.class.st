@@ -4,12 +4,20 @@ Class {
 	#instVars : [
 		'internalClasses',
 		'internalReferences',
-		'externalReferences'
+		'externalReferences',
+		'usedInternalClasses'
 	],
 	#category : 'WWCodeAnalysis-Metrics',
 	#package : 'WWCodeAnalysis',
 	#tag : 'Metrics'
 }
+
+{ #category : 'instance creation' }
+PackageReferenceMetrics class >> forPackage: aPackage [
+	^ (self withInternalClasses: aPackage definedClasses asSet)
+		analyzePackage: aPackage;
+		yourself
+]
 
 { #category : 'instance creation' }
 PackageReferenceMetrics class >> forPackages: aCollectionOfRPackages [
@@ -64,22 +72,48 @@ PackageReferenceMetrics >> externalReferences [
 	^ externalReferences
 ]
 
+{ #category : 'accessing' }
+PackageReferenceMetrics >> externalityRatio [
+	| total |
+	total := self resolvedClassReferences.
+	total = 0 ifTrue: [ ^ 0 ].
+	^ externalReferences / total asFloat
+]
+
 { #category : 'initialization' }
 PackageReferenceMetrics >> initialize [
 	super initialize.
 	internalReferences := 0.
 	externalReferences := 0.
-	internalClasses := Set new
+	internalClasses := Set new.
+	usedInternalClasses := Set new
 ]
 
 { #category : 'accessing' }
 PackageReferenceMetrics >> internalClasses: aSetOfClasses [
-	internalClasses := aSetOfClasses
+	internalClasses := aSetOfClasses asSet.
+	usedInternalClasses removeAll
 ]
 
 { #category : 'accessing' }
 PackageReferenceMetrics >> internalReferences [
 	^ internalReferences
+]
+
+{ #category : 'accessing' }
+PackageReferenceMetrics >> localReferences [
+	^ self internalReferences
+]
+
+{ #category : 'accessing' }
+PackageReferenceMetrics >> localityRatio [
+	^ self rhoInt
+]
+
+{ #category : 'accessing' }
+PackageReferenceMetrics >> locallyUsedClassRatio [
+	internalClasses ifEmpty: [ ^ 0 ].
+	^ usedInternalClasses size / internalClasses size asFloat
 ]
 
 { #category : 'analysis' }
@@ -89,8 +123,15 @@ PackageReferenceMetrics >> processBinding: binding [
 	referencedClass ifNil: [ ^ self ].
 
 	(internalClasses includes: referencedClass)
-		ifTrue: [ internalReferences := internalReferences + 1 ]
+		ifTrue: [
+			internalReferences := internalReferences + 1.
+			usedInternalClasses add: referencedClass ]
 		ifFalse: [ externalReferences := externalReferences + 1 ]
+]
+
+{ #category : 'accessing' }
+PackageReferenceMetrics >> resolvedClassReferences [
+	^ internalReferences + externalReferences
 ]
 
 { #category : 'accessing' }
@@ -106,7 +147,12 @@ PackageReferenceMetrics >> rInt [
 { #category : 'accessing' }
 PackageReferenceMetrics >> rhoInt [
 	| total |
-	total := internalReferences + externalReferences.
+	total := self resolvedClassReferences.
 	total = 0 ifTrue: [ ^ 0 ].
 	^ internalReferences / total asFloat
+]
+
+{ #category : 'accessing' }
+PackageReferenceMetrics >> usedLocalClasses [
+	^ usedInternalClasses size
 ]

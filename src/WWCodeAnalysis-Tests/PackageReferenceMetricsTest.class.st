@@ -34,12 +34,33 @@ PackageReferenceMetricsTest >> testProcessBinding [
 	self assert: metrics rInt equals: 1.
 	self assert: metrics rExt equals: 1.
 
-	self assert: metrics rhoInt equals: 0.5
+	self assert: metrics rhoInt equals: 0.5.
+	self assert: metrics externalityRatio equals: 0.5.
+	self assert: metrics usedLocalClasses equals: 1.
+	self assert: metrics locallyUsedClassRatio equals: 1.0
+]
+
+{ #category : 'tests' }
+PackageReferenceMetricsTest >> testRepeatedReferencesCountOnceForLocalClassCoverage [
+	| metrics binding |
+	metrics := PackageReferenceMetrics withInternalClasses: { Object. Point }.
+
+	binding := Smalltalk globals associationAt: #Object.
+	metrics processBinding: binding.
+	metrics processBinding: binding.
+
+	self assert: metrics resolvedClassReferences equals: 2.
+	self assert: metrics localReferences equals: 2.
+	self assert: metrics usedLocalClasses equals: 1.
+	self assert: metrics localityRatio equals: 1.0.
+	self assert: metrics locallyUsedClassRatio equals: 0.5
 ]
 
 { #category : 'tests' }
 PackageReferenceMetricsTest >> testRhoIntWithZeroReferences [
 	| metrics |
 	metrics := PackageReferenceMetrics new.
-	self assert: metrics rhoInt equals: 0
+	self assert: metrics rhoInt equals: 0.
+	self assert: metrics externalityRatio equals: 0.
+	self assert: metrics locallyUsedClassRatio equals: 0
 ]
