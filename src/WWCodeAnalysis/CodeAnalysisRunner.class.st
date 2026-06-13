@@ -686,6 +686,100 @@ CodeAnalysisRunner class >> latexFamilyVisualizationForCounts: counts totalPacka
 ]
 
 { #category : 'private' }
+CodeAnalysisRunner class >> latexNameLocalityRankingFor: metrics ratio: ratioKey ratioHeading: ratioHeading caption: caption label: label [
+	^ String streamContents: [ :stream |
+		stream nextPutAll: '\begin{table}[!htbp]'; cr.
+		stream nextPutAll: '\centering'; cr.
+		stream nextPutAll: '\begin{tabular}{rllrrrrr}'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: 'Rank & Package & Project/family & Defined classes & Resolved refs & Local refs & External refs & ';
+			nextPutAll: (self latexEscape: ratioHeading);
+			nextPutAll: ' \\';
+			cr.
+		stream nextPutAll: '\hline'; cr.
+		metrics doWithIndex: [ :metric :index |
+			stream
+				nextPutAll: index printString;
+				nextPutAll: ' & ';
+				nextPutAll: (self latexEscape: (metric at: #packageName));
+				nextPutAll: ' & ';
+				nextPutAll: (self latexEscape: (metric at: #projectOrFamily));
+				nextPutAll: ' & ';
+				nextPutAll: (self formatTableCount: (metric at: #definedClasses));
+				nextPutAll: ' & ';
+				nextPutAll: (self formatTableCount: (metric at: #resolvedClassReferences));
+				nextPutAll: ' & ';
+				nextPutAll: (self formatTableCount: (metric at: #localReferences));
+				nextPutAll: ' & ';
+				nextPutAll: (self formatTableCount: (metric at: #externalReferences));
+				nextPutAll: ' & ';
+				nextPutAll: (self formatPercentage: (metric at: ratioKey) over: 1);
+				nextPutAll: '\% \\';
+				cr ].
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\end{tabular}'; cr.
+		stream nextPutAll: '\caption{'; nextPutAll: caption; nextPutAll: '}'; cr.
+		stream nextPutAll: '\label{'; nextPutAll: label; nextPutAll: '}'; cr.
+		stream nextPutAll: '\end{table}'; cr ]
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> latexNameLocalitySummaryFor: metrics [
+	| productionMetrics testMetrics |
+	productionMetrics := metrics reject: [ :each | each at: #isTestPackage ].
+	testMetrics := metrics select: [ :each | each at: #isTestPackage ].
+
+	^ String streamContents: [ :stream |
+		stream nextPutAll: '\begin{table}[!htbp]'; cr.
+		stream nextPutAll: '\centering'; cr.
+		stream nextPutAll: '\begin{tabular}{lrrrrrr}'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: 'Package kind & Packages & Resolved refs & Local refs & Locality & External refs & Externality \\'; cr.
+		stream nextPutAll: '\hline'; cr.
+		self writeNameLocalitySummaryRow: 'Production packages' metrics: productionMetrics on: stream.
+		self writeNameLocalitySummaryRow: 'Test packages' metrics: testMetrics on: stream.
+		self writeNameLocalitySummaryRow: 'All packages' metrics: metrics on: stream.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\end{tabular}'; cr.
+		stream nextPutAll: '\caption{Package-level class-name reference locality.}'; cr.
+		stream nextPutAll: '\label{tab:name-locality-summary}'; cr.
+		stream nextPutAll: '\end{table}'; cr ]
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> latexNameLocalityTestPackagesFor: metrics [
+	^ String streamContents: [ :stream |
+		stream nextPutAll: '\begin{table}[!htbp]'; cr.
+		stream nextPutAll: '\centering'; cr.
+		stream nextPutAll: '\begin{tabular}{rllrrrr}'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: 'Rank & Test package & Project/family & Resolved refs & Local refs & External refs & Locality \\'; cr.
+		stream nextPutAll: '\hline'; cr.
+		metrics doWithIndex: [ :metric :index |
+			stream
+				nextPutAll: index printString;
+				nextPutAll: ' & ';
+				nextPutAll: (self latexEscape: (metric at: #packageName));
+				nextPutAll: ' & ';
+				nextPutAll: (self latexEscape: (metric at: #projectOrFamily));
+				nextPutAll: ' & ';
+				nextPutAll: (self formatTableCount: (metric at: #resolvedClassReferences));
+				nextPutAll: ' & ';
+				nextPutAll: (self formatTableCount: (metric at: #localReferences));
+				nextPutAll: ' & ';
+				nextPutAll: (self formatTableCount: (metric at: #externalReferences));
+				nextPutAll: ' & ';
+				nextPutAll: (self formatPercentage: (metric at: #localityRatio) over: 1);
+				nextPutAll: '\% \\';
+				cr ].
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\end{tabular}'; cr.
+		stream nextPutAll: '\caption{Test packages with the most resolved class-name references.}'; cr.
+		stream nextPutAll: '\label{tab:name-locality-top3-test-packages}'; cr.
+		stream nextPutAll: '\end{table}'; cr ]
+]
+
+{ #category : 'private' }
 CodeAnalysisRunner class >> latexRowFor: aLabel counts: counts [
 	| summary |
 	summary := self statisticsForCounts: counts.
@@ -1524,10 +1618,209 @@ CodeAnalysisRunner class >> listpackagemetrics [
 		]
 ]
 
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> nameLocalityBottom3LocalityTexFileName [
+	^ 'tables/name_locality_bottom3_locality.tex'
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> nameLocalityBottom3LocallyUsedClassesTexFileName [
+	^ 'tables/name_locality_bottom3_locally_used_classes.tex'
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> nameLocalityCsvFileName [
+	^ 'data/name_locality_by_package.csv'
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> nameLocalityCsvFor: metrics [
+	| columns sortedMetrics |
+	columns := #(
+		packageName
+		projectOrFamily
+		isTestPackage
+		definedClasses
+		resolvedClassReferences
+		localReferences
+		externalReferences
+		localityRatio
+		externalityRatio
+		usedLocalClasses
+		locallyUsedClassRatio).
+	sortedMetrics := metrics asSortedCollection: [ :left :right |
+		(left at: #packageName) < (right at: #packageName) ].
+
+	^ String streamContents: [ :stream |
+		stream nextPutAll: (self csvLineFrom: (columns collect: [ :each | each asString ])); cr.
+		sortedMetrics do: [ :metric |
+			stream
+				nextPutAll: (self csvLineFrom: (columns collect: [ :column |
+					(#(localityRatio externalityRatio locallyUsedClassRatio) includes: column)
+						ifTrue: [ self formatTableRatio: (metric at: column) ]
+						ifFalse: [ metric at: column ] ]));
+				cr ] ]
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> nameLocalityCoverageMetricsFrom: metrics [
+	^ metrics select: [ :each |
+		(each at: #definedClasses) >= 3 ]
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> nameLocalityFigureTexFileName [
+	^ 'figures/name-locality-ratios.tex'
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> nameLocalityFigureLatex [
+	^ '\begin{tikzpicture}[
+font=\small,
+package/.style={draw, rounded corners, minimum width=4.5cm, minimum height=3.8cm, align=center},
+label/.style={font=\scriptsize, anchor=east}
+]
+
+% Package A
+\node[package] at (0,0) {};
+\node at (0,1.50) {\textbf{Package A}};
+\node at (0,1.08) {20 defined classes};
+\node[label] at (-1.68,0.55) {References};
+\fill[black!55] (-1.60,0.38) rectangle (-0.96,0.72);
+\fill[black!10] (-0.96,0.38) rectangle (1.60,0.72);
+\draw (-1.60,0.38) rectangle (1.60,0.72);
+\node[label] at (-1.68,-0.15) {Local classes};
+\fill[black!55] (-1.60,-0.32) rectangle (0,-0.02);
+\fill[black!10] (0,-0.32) rectangle (1.60,-0.02);
+\draw (-1.60,-0.32) rectangle (1.60,-0.02);
+\node at (0,-0.78) {10 local refs, 40 external refs};
+\node at (0,-1.16) {$\rho_{\mathrm{local}}=20\%$, $\rho_{\mathrm{external}}=80\%$};
+\node at (0,-1.52) {$\rho_{\mathrm{used}}=50\%$};
+
+% Package B
+\node[package] at (5.2,0) {};
+\node at (5.2,1.50) {\textbf{Package B}};
+\node at (5.2,1.08) {30 defined classes};
+\node[label] at (3.52,0.55) {References};
+\fill[black!55] (3.60,0.38) rectangle (4.918,0.72);
+\fill[black!10] (4.918,0.38) rectangle (6.80,0.72);
+\draw (3.60,0.38) rectangle (6.80,0.72);
+\node[label] at (3.52,-0.15) {Local classes};
+\fill[black!55] (3.60,-0.32) rectangle (6.587,-0.02);
+\fill[black!10] (6.587,-0.32) rectangle (6.80,-0.02);
+\draw (3.60,-0.32) rectangle (6.80,-0.02);
+\node at (5.2,-0.78) {28 local refs, 40 external refs};
+\node at (5.2,-1.16) {$\rho_{\mathrm{local}}=41.2\%$, $\rho_{\mathrm{external}}=58.8\%$};
+\node at (5.2,-1.52) {$\rho_{\mathrm{used}}=93.3\%$};
+
+% Package C
+\node[package] at (10.4,0) {};
+\node at (10.4,1.50) {\textbf{Package C}};
+\node at (10.4,1.08) {20 defined classes};
+\node[label] at (8.72,0.55) {References};
+\fill[black!55] (8.80,0.38) rectangle (9.44,0.72);
+\fill[black!10] (9.44,0.38) rectangle (12.00,0.72);
+\draw (8.80,0.38) rectangle (12.00,0.72);
+\node[label] at (8.72,-0.15) {Local classes};
+\fill[black!55] (8.80,-0.32) rectangle (9.60,-0.02);
+\fill[black!10] (9.60,-0.32) rectangle (12.00,-0.02);
+\draw (8.80,-0.32) rectangle (12.00,-0.02);
+\node at (10.4,-0.78) {5 local refs, 20 external refs};
+\node at (10.4,-1.16) {$\rho_{\mathrm{local}}=20\%$, $\rho_{\mathrm{external}}=80\%$};
+\node at (10.4,-1.52) {$\rho_{\mathrm{used}}=25\%$};
+
+\fill[black!55] (1.3,-2.60) rectangle (1.65,-2.30);
+\draw (1.3,-2.60) rectangle (1.65,-2.30);
+\node[font=\scriptsize, anchor=west] at (1.78,-2.45) {local references / used local classes};
+\fill[black!10] (7.2,-2.60) rectangle (7.55,-2.30);
+\draw (7.2,-2.60) rectangle (7.55,-2.30);
+\node[font=\scriptsize, anchor=west] at (7.68,-2.45) {external references / unused local classes};
+\end{tikzpicture}'
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> nameLocalityMetrics [
+	^ self selectedPackages collect: [ :package |
+		self nameLocalityMetricsForPackage: package ]
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> nameLocalityMetricsForPackage: package [
+	| classes referenceMetrics |
+	classes := self classesOfPackage: package.
+	referenceMetrics := PackageReferenceMetrics withInternalClasses: classes asSet.
+	referenceMetrics analyzePackage: package.
+
+	^ Dictionary newFrom: {
+		#packageName -> package name.
+		#projectOrFamily -> (self familyNameForPackageName: package name).
+		#isTestPackage -> (self isTestPackage: package).
+		#definedClasses -> classes size.
+		#resolvedClassReferences -> referenceMetrics resolvedClassReferences.
+		#localReferences -> referenceMetrics localReferences.
+		#externalReferences -> referenceMetrics externalReferences.
+		#localityRatio -> referenceMetrics localityRatio.
+		#externalityRatio -> referenceMetrics externalityRatio.
+		#usedLocalClasses -> referenceMetrics usedLocalClasses.
+		#locallyUsedClassRatio -> referenceMetrics locallyUsedClassRatio }
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> nameLocalityReferenceMetricsFrom: metrics [
+	^ metrics select: [ :each |
+		(each at: #resolvedClassReferences) >= 10 ]
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> nameLocalitySummaryTexFileName [
+	^ 'tables/name_locality_summary.tex'
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> nameLocalityTopThreeFrom: metrics metric: metricKey descending: descending support: supportKey [
+	| sorted |
+	sorted := metrics asSortedCollection: [ :left :right |
+		| leftMetric rightMetric leftSupport rightSupport |
+		leftMetric := left at: metricKey.
+		rightMetric := right at: metricKey.
+		leftSupport := left at: supportKey.
+		rightSupport := right at: supportKey.
+		leftMetric = rightMetric
+			ifTrue: [
+				leftSupport = rightSupport
+					ifTrue: [ (left at: #packageName) < (right at: #packageName) ]
+					ifFalse: [ leftSupport > rightSupport ] ]
+			ifFalse: [
+				descending
+					ifTrue: [ leftMetric > rightMetric ]
+					ifFalse: [ leftMetric < rightMetric ] ] ].
+	^ sorted first: (3 min: sorted size)
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> nameLocalityTop3ExternalityTexFileName [
+	^ 'tables/name_locality_top3_externality.tex'
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> nameLocalityTop3LocalityTexFileName [
+	^ 'tables/name_locality_top3_locality.tex'
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> nameLocalityTop3LocallyUsedClassesTexFileName [
+	^ 'tables/name_locality_top3_locally_used_classes.tex'
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> nameLocalityTop3TestPackagesTexFileName [
+	^ 'tables/name_locality_top3_test_packages.tex'
+]
+
 { #category : 'running' }
 CodeAnalysisRunner class >> nameLocalityReports [
 	| metrics referenceMetrics coverageMetrics testMetrics |
-	metrics := self packageMetrics.
+	metrics := self nameLocalityMetrics.
 	referenceMetrics := self nameLocalityReferenceMetricsFrom: metrics.
 	coverageMetrics := self nameLocalityCoverageMetricsFrom: metrics.
 	testMetrics := metrics select: [ :each | each at: #isTestPackage ].
@@ -2641,6 +2934,34 @@ CodeAnalysisRunner class >> writeLatexFamilyEntry: entry rank: rank on: stream [
 		nextPutAll: (self latexEscape: entry key);
 		nextPutAll: ' & ';
 		nextPutAll: (self formatTableCount: entry value)
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> writeNameLocalitySummaryRow: label metrics: metrics on: stream [
+	| resolved local external |
+	resolved := self sum: (metrics collect: [ :each |
+		each at: #resolvedClassReferences ]).
+	local := self sum: (metrics collect: [ :each |
+		each at: #localReferences ]).
+	external := self sum: (metrics collect: [ :each |
+		each at: #externalReferences ]).
+
+	stream
+		nextPutAll: label;
+		nextPutAll: ' & ';
+		nextPutAll: (self formatTableCount: metrics size);
+		nextPutAll: ' & ';
+		nextPutAll: (self formatTableCount: resolved);
+		nextPutAll: ' & ';
+		nextPutAll: (self formatTableCount: local);
+		nextPutAll: ' & ';
+		nextPutAll: (self formatPercentage: local over: resolved);
+		nextPutAll: '\% & ';
+		nextPutAll: (self formatTableCount: external);
+		nextPutAll: ' & ';
+		nextPutAll: (self formatPercentage: external over: resolved);
+		nextPutAll: '\% \\';
+		cr
 ]
 
 { #category : 'private' }

@@ -564,3 +564,35 @@ CodeAnalysisRunnerTest >> testNameLocalityRankingUsesSupportAsTieBreaker [
 	self assert: (sorted collect: [ :each | each at: #packageName ]) asArray
 		equals: #('PkgB' 'PkgA' 'PkgC')
 ]
+
+{ #category : 'tests' }
+CodeAnalysisRunnerTest >> testNameLocalityReportsWriteAllArtifacts [
+	| fileSystem outputDirectory originalOutputDirectory originalPackageNames metrics fileNames |
+	fileSystem := FileSystem memory.
+	outputDirectory := fileSystem / 'reports'.
+	originalOutputDirectory := CodeAnalysisRunner outputDirectory.
+	originalPackageNames := CodeAnalysisRunner packageNames.
+	fileNames := {
+		CodeAnalysisRunner nameLocalityCsvFileName.
+		CodeAnalysisRunner nameLocalitySummaryTexFileName.
+		CodeAnalysisRunner nameLocalityTop3LocalityTexFileName.
+		CodeAnalysisRunner nameLocalityBottom3LocalityTexFileName.
+		CodeAnalysisRunner nameLocalityTop3ExternalityTexFileName.
+		CodeAnalysisRunner nameLocalityTop3LocallyUsedClassesTexFileName.
+		CodeAnalysisRunner nameLocalityBottom3LocallyUsedClassesTexFileName.
+		CodeAnalysisRunner nameLocalityTop3TestPackagesTexFileName.
+		CodeAnalysisRunner nameLocalityFigureTexFileName }.
+
+	[
+		CodeAnalysisRunner outputDirectory: outputDirectory.
+		CodeAnalysisRunner packageNames: #('WWCodeAnalysis').
+		metrics := CodeAnalysisRunner nameLocalityReports.
+
+		self assert: metrics size equals: 1.
+		fileNames do: [ :fileName |
+			self assert: (outputDirectory / fileName) exists.
+			self deny: (outputDirectory / fileName) contents isEmpty ]
+	] ensure: [
+		CodeAnalysisRunner outputDirectory: originalOutputDirectory.
+		CodeAnalysisRunner packageNames: originalPackageNames ]
+]
