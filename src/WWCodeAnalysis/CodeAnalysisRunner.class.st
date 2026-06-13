@@ -813,22 +813,39 @@ CodeAnalysisRunner class >> latexRowForWordCountLabel: aLabel pharo: pharoCounts
 
 { #category : 'running' }
 CodeAnalysisRunner class >> latexTableForAllClassesPerPackage [
+
 	| packages testPackages nonTestPackages |
 	packages := self selectedPackages.
 	testPackages := packages select: [ :each | self isTestPackage: each ].
 	nonTestPackages := packages reject: [ :each | self isTestPackage: each ].
 
 	^ String streamContents: [ :stream |
-		stream nextPutAll: '\begin{tabular}{rr|rrrrrr}'; cr.
-		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: '& \bfseries count & \bfseries min & \bfseries 25\% & \bfseries median & \bfseries mean & \bfseries 75\% & \bfseries max \\' ; cr.
-		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: (self latexRowFor: 'All packages' counts: (self classCountsFor: packages)); cr.
-		stream nextPutAll: (self latexRowFor: 'Test packages' counts: (self classCountsFor: testPackages)); cr.
-		stream nextPutAll: (self latexRowFor: 'Non-test packages' counts: (self classCountsFor: nonTestPackages)); cr.
-		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: '\end{tabular}'
-	]
+			  stream
+				  nextPutAll: '\begin{tabular}{rr|rrrrrr}';
+				  cr.
+			  stream
+				  nextPutAll: '\hline';
+				  cr.
+			  stream
+				  nextPutAll:
+					  '\multicolumn{2}{c|}{\bfseries \# Class Per Package} & \bfseries min & \bfseries 25\% & \bfseries median & \bfseries mean & \bfseries 75\% & \bfseries max \\';
+				  cr.
+			  stream
+				  nextPutAll: '\hline';
+				  cr.
+			  stream
+				  nextPutAll: (self latexRowFor: 'All packages' counts: (self classCountsFor: packages));
+				  cr.
+			  stream
+				  nextPutAll: (self latexRowFor: 'Test packages' counts: (self classCountsFor: testPackages));
+				  cr.
+			  stream
+				  nextPutAll: (self latexRowFor: 'Non-test packages' counts: (self classCountsFor: nonTestPackages));
+				  cr.
+			  stream
+				  nextPutAll: '\hline';
+				  cr.
+			  stream nextPutAll: '\end{tabular}' ]
 ]
 
 { #category : 'running' }
@@ -841,7 +858,7 @@ CodeAnalysisRunner class >> latexTableForAllLocPerNonDataMethod [
 	^ String streamContents: [ :stream |
 		stream nextPutAll: '\begin{tabular}{rr|rrrrrr}'; cr.
 		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: '& \bfseries count & \bfseries min & \bfseries 25\% & \bfseries median & \bfseries mean & \bfseries 75\% & \bfseries max \\' ; cr.
+		stream nextPutAll: '\multicolumn{2}{c|}{\bfseries \# LoC Per Method}  & \bfseries min & \bfseries 25\% & \bfseries median & \bfseries mean & \bfseries 75\% & \bfseries max \\' ; cr.
 		stream nextPutAll: '\hline'; cr.
 		stream nextPutAll: (self latexRowFor: 'All methods' counts: (self linesOfCodeForMethods: methods)); cr.
 		stream nextPutAll: (self latexRowFor: 'Test methods' counts: (self linesOfCodeForMethods: testMethods)); cr.
@@ -861,7 +878,7 @@ CodeAnalysisRunner class >> latexTableForAllMethodsPerClass [
 	^ String streamContents: [ :stream |
 		stream nextPutAll: '\begin{tabular}{rr|rrrrrr}'; cr.
 		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: '& \bfseries count & \bfseries min & \bfseries 25\% & \bfseries median & \bfseries mean & \bfseries 75\% & \bfseries max \\' ; cr.
+		stream nextPutAll: '\multicolumn{2}{c|}{\bfseries \# Methods Per Class}  & \bfseries min & \bfseries 25\% & \bfseries median & \bfseries mean & \bfseries 75\% & \bfseries max \\' ; cr.
 		stream nextPutAll: '\hline'; cr.
 		stream nextPutAll: (self latexRowFor: 'All classes' counts: (self methodCountsForClasses: classes)); cr.
 		stream nextPutAll: (self latexRowFor: 'Test classes' counts: (self methodCountsForClasses: testClasses)); cr.
@@ -881,7 +898,7 @@ CodeAnalysisRunner class >> latexTableForAllTokensPerMethod [
 	^ String streamContents: [ :stream |
 		stream nextPutAll: '\begin{tabular}{rr|rrrrrr}'; cr.
 		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: '& \bfseries count & \bfseries min & \bfseries 25\% & \bfseries median & \bfseries mean & \bfseries 75\% & \bfseries max \\' ; cr.
+		stream nextPutAll: '\multicolumn{2}{c|}{\bfseries \# Token Per Method}  & \bfseries min & \bfseries 25\% & \bfseries median & \bfseries mean & \bfseries 75\% & \bfseries max \\' ; cr.
 		stream nextPutAll: '\hline'; cr.
 		stream nextPutAll: (self latexRowFor: 'All methods' counts: (self tokenCountsForMethods: methods)); cr.
 		stream nextPutAll: (self latexRowFor: 'Test methods' counts: (self tokenCountsForMethods: testMethods)); cr.
