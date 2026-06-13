@@ -820,32 +820,16 @@ CodeAnalysisRunner class >> latexTableForAllClassesPerPackage [
 	nonTestPackages := packages reject: [ :each | self isTestPackage: each ].
 
 	^ String streamContents: [ :stream |
-			  stream
-				  nextPutAll: '\begin{tabular}{rr|rrrrrr}';
-				  cr.
-			  stream
-				  nextPutAll: '\hline';
-				  cr.
-			  stream
-				  nextPutAll:
-					  '\multicolumn{2}{c|}{\bfseries \# Class Per Package} & \bfseries min & \bfseries 25\% & \bfseries median & \bfseries mean & \bfseries 75\% & \bfseries max \\';
-				  cr.
-			  stream
-				  nextPutAll: '\hline';
-				  cr.
-			  stream
-				  nextPutAll: (self latexRowFor: 'All packages' counts: (self classCountsFor: packages));
-				  cr.
-			  stream
-				  nextPutAll: (self latexRowFor: 'Test packages' counts: (self classCountsFor: testPackages));
-				  cr.
-			  stream
-				  nextPutAll: (self latexRowFor: 'Non-test packages' counts: (self classCountsFor: nonTestPackages));
-				  cr.
-			  stream
-				  nextPutAll: '\hline';
-				  cr.
-			  stream nextPutAll: '\end{tabular}' ]
+			 stream nextPutAll: '\begin{tabular}{rr|rrrrrr}'; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\multicolumn{2}{c|}{\bfseries \# Class Per Package} & \bfseries min & \bfseries 25\% & \bfseries median & \bfseries mean & \bfseries 75\% & \bfseries max \\' ; cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: (self latexRowFor: 'All packages' counts: (self classCountsFor: packages)); cr.
+		stream nextPutAll: (self latexRowFor: 'Test packages' counts: (self classCountsFor: testPackages)); cr.
+		stream nextPutAll: (self latexRowFor: 'Non-test packages' counts: (self classCountsFor: nonTestPackages)); cr.
+		stream nextPutAll: '\hline'; cr.
+		stream nextPutAll: '\end{tabular}'
+	]
 ]
 
 { #category : 'running' }
