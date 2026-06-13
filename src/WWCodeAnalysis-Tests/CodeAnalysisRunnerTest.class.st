@@ -20,8 +20,7 @@ CodeAnalysisRunnerTest >> testCalculateStatisticsFor [
 ]
 
 { #category : 'tests' }
-<<<<<<< HEAD
-=======
+
 CodeAnalysisRunnerTest >> testTexFileName [
 	self assert: CodeAnalysisRunner countsTexFileName equals: 'counts.tex'.
 	self assert: CodeAnalysisRunner boxplotDistributionPlotCsvFileName equals: 'size_distribution_plot.csv'.
