@@ -694,7 +694,7 @@ CodeAnalysisRunner class >> latexNameLocalityRankingFor: metrics ratio: ratioKey
 		stream nextPutAll: '\begin{tabular}{rllrrrrr}'; cr.
 		stream nextPutAll: '\hline'; cr.
 		stream nextPutAll: 'Rank & Package & Project/family & $\#D_p$ & $\#R_p$ & $\#R_{\mathrm{local}}(p)$ & $\#R_{\mathrm{external}}(p)$ & ';
-			nextPutAll: (self latexEscape: ratioHeading);
+			nextPutAll: ratioHeading;
 			nextPutAll: ' \\';
 			cr.
 		stream nextPutAll: '\hline'; cr.
