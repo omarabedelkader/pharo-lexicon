@@ -690,9 +690,10 @@ CodeAnalysisRunner class >> latexNameLocalityRankingFor: metrics ratio: ratioKey
 	^ String streamContents: [ :stream |
 		stream nextPutAll: '\begin{table}[!htbp]'; cr.
 		stream nextPutAll: '\centering'; cr.
+		stream nextPutAll: '\resizebox{\textwidth}{!}{%'; cr.
 		stream nextPutAll: '\begin{tabular}{rllrrrrr}'; cr.
 		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: 'Rank & Package & Project/family & Defined classes & Resolved refs & Local refs & External refs & ';
+		stream nextPutAll: 'Rank & Package & Project/family & $\#D_p$ & $\#R_p$ & $\#R_{\mathrm{local}}(p)$ & $\#R_{\mathrm{external}}(p)$ & ';
 			nextPutAll: (self latexEscape: ratioHeading);
 			nextPutAll: ' \\';
 			cr.
@@ -717,7 +718,8 @@ CodeAnalysisRunner class >> latexNameLocalityRankingFor: metrics ratio: ratioKey
 				nextPutAll: '\% \\';
 				cr ].
 		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: '\end{tabular}'; cr.
+		stream nextPutAll: '\end{tabular}%'; cr.
+		stream nextPutAll: '}'; cr.
 		stream nextPutAll: '\caption{'; nextPutAll: caption; nextPutAll: '}'; cr.
 		stream nextPutAll: '\label{'; nextPutAll: label; nextPutAll: '}'; cr.
 		stream nextPutAll: '\end{table}'; cr ]
@@ -732,15 +734,17 @@ CodeAnalysisRunner class >> latexNameLocalitySummaryFor: metrics [
 	^ String streamContents: [ :stream |
 		stream nextPutAll: '\begin{table}[!htbp]'; cr.
 		stream nextPutAll: '\centering'; cr.
+		stream nextPutAll: '\resizebox{\textwidth}{!}{%'; cr.
 		stream nextPutAll: '\begin{tabular}{lrrrrrr}'; cr.
 		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: 'Package kind & Packages & Resolved refs & Local refs & Locality & External refs & Externality \\'; cr.
+		stream nextPutAll: 'Package kind & \# packages & $\#R_p$ & $\#R_{\mathrm{local}}(p)$ & $\rho_{\mathrm{local}}(p)$ & $\#R_{\mathrm{external}}(p)$ & $\rho_{\mathrm{external}}(p)$ \\'; cr.
 		stream nextPutAll: '\hline'; cr.
 		self writeNameLocalitySummaryRow: 'Production packages' metrics: productionMetrics on: stream.
 		self writeNameLocalitySummaryRow: 'Test packages' metrics: testMetrics on: stream.
 		self writeNameLocalitySummaryRow: 'All packages' metrics: metrics on: stream.
 		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: '\end{tabular}'; cr.
+		stream nextPutAll: '\end{tabular}%'; cr.
+		stream nextPutAll: '}'; cr.
 		stream nextPutAll: '\caption{Package-level class-name reference locality.}'; cr.
 		stream nextPutAll: '\label{tab:name-locality-summary}'; cr.
 		stream nextPutAll: '\end{table}'; cr ]
@@ -751,9 +755,10 @@ CodeAnalysisRunner class >> latexNameLocalityTestPackagesFor: metrics [
 	^ String streamContents: [ :stream |
 		stream nextPutAll: '\begin{table}[!htbp]'; cr.
 		stream nextPutAll: '\centering'; cr.
+		stream nextPutAll: '\resizebox{\textwidth}{!}{%'; cr.
 		stream nextPutAll: '\begin{tabular}{rllrrrr}'; cr.
 		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: 'Rank & Test package & Project/family & Resolved refs & Local refs & External refs & Locality \\'; cr.
+		stream nextPutAll: 'Rank & Test package & Project/family & $\#R_p$ & $\#R_{\mathrm{local}}(p)$ & $\#R_{\mathrm{external}}(p)$ & $\rho_{\mathrm{local}}(p)$ \\'; cr.
 		stream nextPutAll: '\hline'; cr.
 		metrics doWithIndex: [ :metric :index |
 			stream
@@ -773,7 +778,8 @@ CodeAnalysisRunner class >> latexNameLocalityTestPackagesFor: metrics [
 				nextPutAll: '\% \\';
 				cr ].
 		stream nextPutAll: '\hline'; cr.
-		stream nextPutAll: '\end{tabular}'; cr.
+		stream nextPutAll: '\end{tabular}%'; cr.
+		stream nextPutAll: '}'; cr.
 		stream nextPutAll: '\caption{Test packages with the most resolved class-name references.}'; cr.
 		stream nextPutAll: '\label{tab:name-locality-top3-test-packages}'; cr.
 		stream nextPutAll: '\end{table}'; cr ]
@@ -1839,7 +1845,7 @@ CodeAnalysisRunner class >> nameLocalityReports [
 				descending: true
 				support: #resolvedClassReferences)
 			ratio: #localityRatio
-			ratioHeading: 'Locality'
+			ratioHeading: '$\rho_{\mathrm{local}}(p)$'
 			caption: 'Packages with the highest class-name reference locality (minimum 10 resolved references).'
 			label: 'tab:name-locality-top3-locality')
 		to: self nameLocalityTop3LocalityTexFileName.
@@ -1851,7 +1857,7 @@ CodeAnalysisRunner class >> nameLocalityReports [
 				descending: false
 				support: #resolvedClassReferences)
 			ratio: #localityRatio
-			ratioHeading: 'Locality'
+			ratioHeading: '$\rho_{\mathrm{local}}(p)$'
 			caption: 'Packages with the lowest class-name reference locality (minimum 10 resolved references).'
 			label: 'tab:name-locality-bottom3-locality')
 		to: self nameLocalityBottom3LocalityTexFileName.
@@ -1863,7 +1869,7 @@ CodeAnalysisRunner class >> nameLocalityReports [
 				descending: true
 				support: #resolvedClassReferences)
 			ratio: #externalityRatio
-			ratioHeading: 'Externality'
+			ratioHeading: '$\rho_{\mathrm{external}}(p)$'
 			caption: 'Packages with the highest class-name reference externality (minimum 10 resolved references).'
 			label: 'tab:name-locality-top3-externality')
 		to: self nameLocalityTop3ExternalityTexFileName.
@@ -1875,7 +1881,7 @@ CodeAnalysisRunner class >> nameLocalityReports [
 				descending: true
 				support: #definedClasses)
 			ratio: #locallyUsedClassRatio
-			ratioHeading: 'Local-class use'
+			ratioHeading: '$\rho_{\mathrm{used}}(p)$'
 			caption: 'Packages with the highest locally-used-class ratio (minimum 3 defined classes).'
 			label: 'tab:name-locality-top3-locally-used')
 		to: self nameLocalityTop3LocallyUsedClassesTexFileName.
@@ -1887,7 +1893,7 @@ CodeAnalysisRunner class >> nameLocalityReports [
 				descending: false
 				support: #definedClasses)
 			ratio: #locallyUsedClassRatio
-			ratioHeading: 'Local-class use'
+			ratioHeading: '$\rho_{\mathrm{used}}(p)$'
 			caption: 'Packages with the lowest locally-used-class ratio (minimum 3 defined classes).'
 			label: 'tab:name-locality-bottom3-locally-used')
 		to: self nameLocalityBottom3LocallyUsedClassesTexFileName.
