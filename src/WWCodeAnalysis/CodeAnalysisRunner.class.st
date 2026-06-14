@@ -721,6 +721,20 @@ CodeAnalysisRunner class >> latexNameLocalityHighestAndLowestFor: highestMetrics
 		stream nextPutAll: '\end{table}'; cr ]
 ]
 
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> nameLocalityHighestLowestLocalityTexFileName [
+	^ 'tables/name_locality_highest_lowest_locality.tex'
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> nameLocalityHighestLowestExternalityTexFileName [
+	^ 'tables/name_locality_highest_lowest_externality.tex'
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> nameLocalityHighestLowestLocallyUsedClassesTexFileName [
+	^ 'tables/name_locality_highest_lowest_locally_used_classes.tex'
+]
 
 { #category : 'private' }
 CodeAnalysisRunner class >> latexNameLocalityRankingFor: metrics ratio: ratioKey ratioHeading: ratioHeading caption: caption label: label [
@@ -1699,6 +1713,11 @@ CodeAnalysisRunner class >> nameLocalityCsvFor: metrics [
 				cr ] ]
 ]
 
+{ #category : 'private' }
+CodeAnalysisRunner class >> nameLocalityCoverageMetricsFrom: metrics [
+	^ metrics select: [ :each |
+		(each at: #definedClasses) >= 3 ]
+]
 
 { #category : 'accessing' }
 CodeAnalysisRunner class >> nameLocalityFigureTexFileName [
@@ -1797,6 +1816,11 @@ CodeAnalysisRunner class >> nameLocalityMetricsForPackage: package [
 		#locallyUsedClassRatio -> referenceMetrics locallyUsedClassRatio }
 ]
 
+{ #category : 'private' }
+CodeAnalysisRunner class >> nameLocalityReferenceMetricsFrom: metrics [
+	^ metrics select: [ :each |
+		(each at: #resolvedClassReferences) >= 10 ]
+]
 
 { #category : 'accessing' }
 CodeAnalysisRunner class >> nameLocalitySummaryTexFileName [
@@ -1846,60 +1870,66 @@ CodeAnalysisRunner class >> nameLocalityTop3TestPackagesTexFileName [
 
 { #category : 'running' }
 CodeAnalysisRunner class >> nameLocalityReports [
-	| metrics tables |
+	| metrics referenceMetrics coverageMetrics |
 	metrics := self nameLocalityMetrics.
-	tables := OrderedCollection new.
+	referenceMetrics := self nameLocalityReferenceMetricsFrom: metrics.
+	coverageMetrics := self nameLocalityCoverageMetricsFrom: metrics.
 
-	tables add: (self
-		latexNameLocalityHighestAndLowestFor: (self
-			nameLocalityTopThreeFrom: metrics
-			metric: #localityRatio
-			descending: true
-			support: #resolvedClassReferences)
-		and: (self
-			nameLocalityTopThreeFrom: metrics
-			metric: #localityRatio
-			descending: false
-			support: #resolvedClassReferences)
-		ratioKey: #localityRatio
-		ratioHeading: '$\rho_{\mathrm{local}}(p)$'
-		caption: 'Three highest and three lowest packages by class-name reference locality.'
-		label: 'tab:highest-lowest-locality').
+	self
+		write: (self
+			latexNameLocalityHighestAndLowestFor: (self
+				nameLocalityTopThreeFrom: referenceMetrics
+				metric: #localityRatio
+				descending: true
+				support: #resolvedClassReferences)
+			and: (self
+				nameLocalityTopThreeFrom: referenceMetrics
+				metric: #localityRatio
+				descending: false
+				support: #resolvedClassReferences)
+			ratioKey: #localityRatio
+			ratioHeading: '$\rho_{\mathrm{local}}(p)$'
+			caption: 'Three highest and three lowest packages by class-name reference locality.'
+			label: 'tab:highest-lowest-locality')
+		to: self nameLocalityHighestLowestLocalityTexFileName.
 
-	tables add: (self
-		latexNameLocalityHighestAndLowestFor: (self
-			nameLocalityTopThreeFrom: metrics
-			metric: #externalityRatio
-			descending: true
-			support: #resolvedClassReferences)
-		and: (self
-			nameLocalityTopThreeFrom: metrics
-			metric: #externalityRatio
-			descending: false
-			support: #resolvedClassReferences)
-		ratioKey: #externalityRatio
-		ratioHeading: '$\rho_{\mathrm{external}}(p)$'
-		caption: 'Three highest and three lowest packages by class-name reference externality.'
-		label: 'tab:highest-lowest-externality').
+	self
+		write: (self
+			latexNameLocalityHighestAndLowestFor: (self
+				nameLocalityTopThreeFrom: referenceMetrics
+				metric: #externalityRatio
+				descending: true
+				support: #resolvedClassReferences)
+			and: (self
+				nameLocalityTopThreeFrom: referenceMetrics
+				metric: #externalityRatio
+				descending: false
+				support: #resolvedClassReferences)
+			ratioKey: #externalityRatio
+			ratioHeading: '$\rho_{\mathrm{external}}(p)$'
+			caption: 'Three highest and three lowest packages by class-name reference externality.'
+			label: 'tab:highest-lowest-externality')
+		to: self nameLocalityHighestLowestExternalityTexFileName.
 
-	tables add: (self
-		latexNameLocalityHighestAndLowestFor: (self
-			nameLocalityTopThreeFrom: metrics
-			metric: #locallyUsedClassRatio
-			descending: true
-			support: #definedClasses)
-		and: (self
-			nameLocalityTopThreeFrom: metrics
-			metric: #locallyUsedClassRatio
-			descending: false
-			support: #definedClasses)
-		ratioKey: #locallyUsedClassRatio
-		ratioHeading: '$\rho_{\mathrm{used}}(p)$'
-		caption: 'Three highest and three lowest packages by locally-used-class ratio.'
-		label: 'tab:highest-lowest-locally-used').
+	self
+		write: (self
+			latexNameLocalityHighestAndLowestFor: (self
+				nameLocalityTopThreeFrom: coverageMetrics
+				metric: #locallyUsedClassRatio
+				descending: true
+				support: #definedClasses)
+			and: (self
+				nameLocalityTopThreeFrom: coverageMetrics
+				metric: #locallyUsedClassRatio
+				descending: false
+				support: #definedClasses)
+			ratioKey: #locallyUsedClassRatio
+			ratioHeading: '$\rho_{\mathrm{used}}(p)$'
+			caption: 'Three highest and three lowest packages by locally-used-class ratio.'
+			label: 'tab:highest-lowest-locally-used')
+		to: self nameLocalityHighestLowestLocallyUsedClassesTexFileName.
 
-	^ String streamContents: [ :stream |
-		tables do: [ :each | stream nextPutAll: each; cr; cr ] ]
+	^ metrics
 ]
 
 { #category : 'running' }
