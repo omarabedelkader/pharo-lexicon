@@ -400,6 +400,11 @@ CodeAnalysisRunner class >> formatStatistic: aKey value: aValue [
 ]
 
 { #category : 'private' }
+CodeAnalysisRunner class >> formatTwoDecimals: aNumber [
+	^ aNumber asFloat printShowingDecimalPlaces: 2
+]
+
+{ #category : 'private' }
 CodeAnalysisRunner class >> formatTableCount: anInteger [
 	| digits |
 	digits := anInteger asInteger printString.
@@ -683,6 +688,52 @@ CodeAnalysisRunner class >> latexFamilyVisualizationForCounts: counts totalPacka
 		stream nextPutAll: '\end{tabular}'; cr.
 		stream nextPutAll: '\endgroup'
 	]
+]
+
+{ #category : 'private' }
+CodeAnalysisRunner class >> latexNameLocalityHighestAndLowestFor: highestMetrics and: lowestMetrics ratioKey: ratioKey ratioHeading: ratioHeading caption: caption label: label [
+	^ String streamContents: [ :stream |
+		stream nextPutAll: '\begin{table}[htbp]'; cr.
+		stream nextPutAll: '\centering'; cr.
+		stream nextPutAll: '\caption{'; nextPutAll: caption; nextPutAll: '}'; cr.
+		stream nextPutAll: '\label{'; nextPutAll: label; nextPutAll: '}'; cr.
+		stream nextPutAll: '\begin{tabular}{lr}'; cr.
+		stream nextPutAll: '\toprule'; cr.
+		stream nextPutAll: 'Package & '; nextPutAll: ratioHeading; nextPutAll: ' \\'; cr.
+		stream nextPutAll: '\midrule'; cr.
+		stream nextPutAll: '\multicolumn{2}{l}{\textit{Highest}} \\'; cr.
+		highestMetrics do: [ :metric |
+			stream
+				nextPutAll: (self latexEscape: (metric at: #packageName));
+				nextPutAll: ' & ';
+				nextPutAll: (self formatTwoDecimals: (metric at: ratioKey));
+				nextPutAll: ' \\'; cr ].
+		stream nextPutAll: '\midrule'; cr.
+		stream nextPutAll: '\multicolumn{2}{l}{\textit{Lowest}} \\'; cr.
+		lowestMetrics do: [ :metric |
+			stream
+				nextPutAll: (self latexEscape: (metric at: #packageName));
+				nextPutAll: ' & ';
+				nextPutAll: (self formatTwoDecimals: (metric at: ratioKey));
+				nextPutAll: ' \\'; cr ].
+		stream nextPutAll: '\bottomrule'; cr.
+		stream nextPutAll: '\end{tabular}'; cr.
+		stream nextPutAll: '\end{table}'; cr ]
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> nameLocalityHighestLowestLocalityTexFileName [
+	^ 'tables/name_locality_highest_lowest_locality.tex'
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> nameLocalityHighestLowestExternalityTexFileName [
+	^ 'tables/name_locality_highest_lowest_externality.tex'
+]
+
+{ #category : 'accessing' }
+CodeAnalysisRunner class >> nameLocalityHighestLowestLocallyUsedClassesTexFileName [
+	^ 'tables/name_locality_highest_lowest_locally_used_classes.tex'
 ]
 
 { #category : 'private' }
@@ -1819,88 +1870,64 @@ CodeAnalysisRunner class >> nameLocalityTop3TestPackagesTexFileName [
 
 { #category : 'running' }
 CodeAnalysisRunner class >> nameLocalityReports [
-	| metrics referenceMetrics coverageMetrics testMetrics |
+	| metrics referenceMetrics coverageMetrics |
 	metrics := self nameLocalityMetrics.
 	referenceMetrics := self nameLocalityReferenceMetricsFrom: metrics.
 	coverageMetrics := self nameLocalityCoverageMetricsFrom: metrics.
-	testMetrics := metrics select: [ :each | each at: #isTestPackage ].
 
 	self
-		write: (self nameLocalityCsvFor: metrics)
-		to: self nameLocalityCsvFileName.
-	self
-		write: (self latexNameLocalitySummaryFor: metrics)
-		to: self nameLocalitySummaryTexFileName.
-	self
 		write: (self
-			latexNameLocalityRankingFor: (self
+			latexNameLocalityHighestAndLowestFor: (self
 				nameLocalityTopThreeFrom: referenceMetrics
 				metric: #localityRatio
 				descending: true
 				support: #resolvedClassReferences)
-			ratio: #localityRatio
-			ratioHeading: 'Locality'
-			caption: 'Packages with the highest class-name reference locality (minimum 10 resolved references).'
-			label: 'tab:name-locality-top3-locality')
-		to: self nameLocalityTop3LocalityTexFileName.
-	self
-		write: (self
-			latexNameLocalityRankingFor: (self
+			and: (self
 				nameLocalityTopThreeFrom: referenceMetrics
 				metric: #localityRatio
 				descending: false
 				support: #resolvedClassReferences)
-			ratio: #localityRatio
-			ratioHeading: 'Locality'
-			caption: 'Packages with the lowest class-name reference locality (minimum 10 resolved references).'
-			label: 'tab:name-locality-bottom3-locality')
-		to: self nameLocalityBottom3LocalityTexFileName.
+			ratioKey: #localityRatio
+			ratioHeading: '$\rho_{\mathrm{local}}(p)$'
+			caption: 'Three highest and three lowest packages by class-name reference locality.'
+			label: 'tab:highest-lowest-locality')
+		to: self nameLocalityHighestLowestLocalityTexFileName.
+
 	self
 		write: (self
-			latexNameLocalityRankingFor: (self
+			latexNameLocalityHighestAndLowestFor: (self
 				nameLocalityTopThreeFrom: referenceMetrics
 				metric: #externalityRatio
 				descending: true
 				support: #resolvedClassReferences)
-			ratio: #externalityRatio
-			ratioHeading: 'Externality'
-			caption: 'Packages with the highest class-name reference externality (minimum 10 resolved references).'
-			label: 'tab:name-locality-top3-externality')
-		to: self nameLocalityTop3ExternalityTexFileName.
+			and: (self
+				nameLocalityTopThreeFrom: referenceMetrics
+				metric: #externalityRatio
+				descending: false
+				support: #resolvedClassReferences)
+			ratioKey: #externalityRatio
+			ratioHeading: '$\rho_{\mathrm{external}}(p)$'
+			caption: 'Three highest and three lowest packages by class-name reference externality.'
+			label: 'tab:highest-lowest-externality')
+		to: self nameLocalityHighestLowestExternalityTexFileName.
+
 	self
 		write: (self
-			latexNameLocalityRankingFor: (self
+			latexNameLocalityHighestAndLowestFor: (self
 				nameLocalityTopThreeFrom: coverageMetrics
 				metric: #locallyUsedClassRatio
 				descending: true
 				support: #definedClasses)
-			ratio: #locallyUsedClassRatio
-			ratioHeading: 'Local-class use'
-			caption: 'Packages with the highest locally-used-class ratio (minimum 3 defined classes).'
-			label: 'tab:name-locality-top3-locally-used')
-		to: self nameLocalityTop3LocallyUsedClassesTexFileName.
-	self
-		write: (self
-			latexNameLocalityRankingFor: (self
+			and: (self
 				nameLocalityTopThreeFrom: coverageMetrics
 				metric: #locallyUsedClassRatio
 				descending: false
 				support: #definedClasses)
-			ratio: #locallyUsedClassRatio
-			ratioHeading: 'Local-class use'
-			caption: 'Packages with the lowest locally-used-class ratio (minimum 3 defined classes).'
-			label: 'tab:name-locality-bottom3-locally-used')
-		to: self nameLocalityBottom3LocallyUsedClassesTexFileName.
-	self
-		write: (self latexNameLocalityTestPackagesFor: (self
-			nameLocalityTopThreeFrom: testMetrics
-			metric: #resolvedClassReferences
-			descending: true
-			support: #resolvedClassReferences))
-		to: self nameLocalityTop3TestPackagesTexFileName.
-	self
-		write: self nameLocalityFigureLatex
-		to: self nameLocalityFigureTexFileName.
+			ratioKey: #locallyUsedClassRatio
+			ratioHeading: '$\rho_{\mathrm{used}}(p)$'
+			caption: 'Three highest and three lowest packages by locally-used-class ratio.'
+			label: 'tab:highest-lowest-locally-used')
+		to: self nameLocalityHighestLowestLocallyUsedClassesTexFileName.
 
 	^ metrics
 ]
