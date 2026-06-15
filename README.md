@@ -43,7 +43,7 @@ fields in collector exports remain project-scoped for compatibility.
 ```smalltalk
 Metacello new
   baseline: 'PharoLexicon';
-  repository: 'tonel:///Users/omar/Desktop/Github/pharo-lexicon/src';
+  repository: 'tonel:///Users/username/Desktop/pharo-lexicon/src';
   load.
 ```
 
